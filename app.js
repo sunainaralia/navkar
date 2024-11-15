@@ -4,7 +4,7 @@ import ErrorHandling from "./Controllers/ErrorHandling.js";
 import { userRouter } from './Routes/UserRouter.js';
 import { contactRouter } from "./Routes/ContactRouter.js";
 import { CityRouter, ProvinceRouter, ZoneRouter, PostalCodeRouter } from "./Routes/ProvinceRouter.js";
-import { uploadRouter } from "./Routes/uploadRouter.js";
+import { uploadRouter } from "./Routes/UploadRouter.js";
 import setupSwaggerDocs from "./Middlewares/swaggerConfig.js";
 const app = express();
 app.use(express.json());
