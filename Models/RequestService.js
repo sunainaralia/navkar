@@ -32,9 +32,9 @@ const contactSchema = new mongoose.Schema({
     type: Number,
     required: [true, "Postal code is required"]
   },
-  message: {
+  msg: {
     type: String,
-    required: [true, "Message is required"]
+    required: [true, "msg is required"]
   }
 }, { timestamps: true });
 

@@ -1,7 +1,7 @@
 const developmentError = (error, res) => {
   return res.status(error.errorStatus).json({
     status: error.errorStatus,
-    msg: error.message,
+    msg: error.msg,
     stackTrace: error.stack,
     error: error
   });
@@ -11,26 +11,26 @@ const productionError = (error, res) => {
   if (error.isOprationError) {
     return res.status(error.errorStatus).json({
       status: error.errorStatus,
-      message: error.message,
+      msg: error.msg,
     });
   } else {
     return res.status(500).json({
       status: "error",
-      message: "something went wrong",
+      msg: "something went wrong",
     });
   }
 };
 const missingTokenError = (error, res) => {
   return res.status(401).json({
     status: 401,
-    message: "Token is not provided or login is required",
+    msg: "Token is not provided or login is required",
   });
 };
 const castError = (error, res) => {
   const err = `Your id ${error.value} is not correct for ${error.path} field`;
   return res.status(400).json({
     status: 400,
-    message: err,
+    msg: err,
   });
 };
 
@@ -38,29 +38,29 @@ const duplicateError = (error, res) => {
   let msg = `${Object.keys(error.keyValue)[0]} must be unique`;
   return res.status(400).json({
     status: 400,
-    message: msg,
+    msg: msg,
   });
 };
 
 const validationError = (error, res) => {
-  const errMsg = Object.values(error.errors).map(err => err.message);
+  const errMsg = Object.values(error.errors).map(err => err.msg);
   return res.status(400).json({
     status: 400,
-    message: `Validation Error: ${errMsg.join(". ")}`,
+    msg: `Validation Error: ${errMsg.join(". ")}`,
   });
 };
 
 const invalidTokenError = (error, res) => {
   return res.status(401).json({
     status: 401,
-    message: `Token is not valid. Please provide a valid token.`,
+    msg: `Token is not valid. Please provide a valid token.`,
   });
 };
 
 const tokenExpiredError = (error, res) => {
   return res.status(401).json({
     status: 401,
-    message: "Token has expired",
+    msg: "Token has expired",
   });
 };
 
@@ -84,7 +84,7 @@ const errorHandling = (error, req, res, next) => {
         if (error.code === 11000) {
           return duplicateError(error, res);
         }
-        if (error.message === "token is not provided or login is required") {
+        if (error.msg === "token is not provided or login is required") {
           return missingTokenError(error, res);
         }
         return productionError(error, res);

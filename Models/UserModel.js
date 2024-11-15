@@ -31,7 +31,7 @@ const userSchema = new mongoose.Schema({
       validator: function (value) {
         return value === this.password;
       },
-      message: "password and confirm password are not the same"
+      msg: "password and confirm password are not the same"
     }
   },
   role: {

@@ -8,7 +8,7 @@ export const createCustomer = asyncFunHandler(async (req, res, next) => {
   const customer = await Customer.create(req.body);
   res.status(201).json({
     success: true,
-    message: "Customer created successfully",
+    msg: "Customer created successfully",
     data: customer
   });
 });
@@ -39,7 +39,7 @@ export const updateCustomerById = asyncFunHandler(async (req, res, next) => {
   const userId = req.user._id;
 
   const customer = await Customer.findOneAndUpdate(
-    { _id: req.params.id, user: userId }, 
+    { _id: req.params.id, user: userId },
     req.body,
     {
       new: true,
@@ -52,14 +52,14 @@ export const updateCustomerById = asyncFunHandler(async (req, res, next) => {
   }
   res.status(200).json({
     success: true,
-    message: "Customer updated successfully",
+    msg: "Customer updated successfully",
     data: customer,
   });
 });
 
 // Controller to create an order
 export const createOrder = asyncFunHandler(async (req, res, next) => {
-  const { userId, address2, service_type, message, assigned_driver, reason, pickUpDate, DropUpDate, shift } = req.body;
+  const { userId, address2, service_type, msg, assigned_driver, reason, pickUpDate, DropUpDate, shift } = req.body;
 
   // Ensure customer exists
   const customer = await Customer.findById(userId);
@@ -72,7 +72,7 @@ export const createOrder = asyncFunHandler(async (req, res, next) => {
     userId,
     address2,
     service_type,
-    message,
+    msg,
     assigned_driver,
     reason,
     pickUpDate,
@@ -85,7 +85,7 @@ export const createOrder = asyncFunHandler(async (req, res, next) => {
 
   res.status(201).json({
     success: true,
-    message: "Order created successfully",
+    msg: "Order created successfully",
     data: order
   });
 });
@@ -122,8 +122,8 @@ export const getOrderById = asyncFunHandler(async (req, res, next) => {
 export const updateOrderByCustomerId = asyncFunHandler(async (req, res, next) => {
   const { customer_id } = req.params;
   const updatedOrder = await Order.findOneAndUpdate(
-    { customer_id },  
-    req.body,       
+    { customer_id },
+    req.body,
     { new: true, runValidators: true }
   );
 
@@ -133,7 +133,7 @@ export const updateOrderByCustomerId = asyncFunHandler(async (req, res, next) =>
 
   res.status(200).json({
     success: true,
-    message: "Order updated successfully",
+    msg: "Order updated successfully",
     data: updatedOrder
   });
 });

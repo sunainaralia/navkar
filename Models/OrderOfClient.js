@@ -36,7 +36,7 @@ const OrderSchema = new mongoose.Schema({
   },
   address2: String,
   service_type: String,
-  message: String,
+  msg: String,
   order_status: {
     type: String,
     default: "picked"
@@ -52,18 +52,18 @@ const OrderSchema = new mongoose.Schema({
   reason: {
     type: String
   },
-  isDriverUpdated:{
-    type:Boolean,
-    default:false
+  isDriverUpdated: {
+    type: Boolean,
+    default: false
   },
-  pickUpDate:{
-    type:Date
-  },
-  DropUpDate:{
+  pickUpDate: {
     type: Date
   },
-  shift:{
-    type:String
+  DropUpDate: {
+    type: Date
+  },
+  shift: {
+    type: String
   }
 }, { timestamps: true });
 OrderSchema.pre('save', async function (next) {

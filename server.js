@@ -8,7 +8,7 @@ mongoose.connect(process.env.CONN_STR).then((conn) => {
 });
 // uncaught exception
 // process.on('uncaughtException', (err) => {
-//   console.log(err.name, err.message);
+//   console.log(err.name, err.msg);
 //   console.log("unhandled error rejection ,server is shutting down !!!");
 //   process.exit(1);
 // })
@@ -19,7 +19,7 @@ const server = app.listen(process.env.PORT, () => {
 });
 // unhandled rejection
 // process.on('unhandledRejection', (err) => {
-//   console.log(err.name, err.message);
+//   console.log(err.name, err.msg);
 //   console.log("unhandled error rejection ,server is shutting downs !!!");
 //   server.close(() => { process.exit(1) })
 // })

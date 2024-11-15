@@ -60,7 +60,7 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
   }
   return res.status(201).json({
     success: true,
-    message: `${role} created successfully`,
+    msg: `${role} created successfully`,
     data: responseData,
     token
   });
@@ -205,10 +205,10 @@ export const forgotPassword = asyncFunHandler(async (req, res, next) => {
   const resetToken = await user.resetPasswordToken();
   await user.save({ validateBeforeSave: false });
   const url = `${req.protocol}://${req.get('host')}/v1/api/user/resetPassword/${resetToken}/`;
-  const message = `email is sent to your registered email plz reset your password by click on following link \n\n ${url}\n\n\n and this is valid upto ${user.resetTokenExpiresIn}`
+  const msg = `email is sent to your registered email plz reset your password by click on following link \n\n ${url}\n\n\n and this is valid upto ${user.resetTokenExpiresIn}`
   try {
     await sendEmail({
-      message: message,
+      msg: msg,
       email: user.email,
       subject: "email for reset password"
     })

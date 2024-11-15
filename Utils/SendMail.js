@@ -12,7 +12,7 @@ const sendEmail = (option) => {
     from: `sunaina ralia<sunainaralia@gmail.com>`,
     to: option.email,
     subject: option.subject,
-    text: option.message
+    text: option.msg
   };
   transporter.sendMail(emailOptions);
 }
