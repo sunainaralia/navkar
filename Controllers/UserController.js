@@ -1,4 +1,5 @@
 import User, { Client, Driver } from '../Models/UserModel.js';
+import { Customer } from '../Models/OrderOfClient.js';
 import pkg from 'jsonwebtoken';
 import CustomErrorHandler from '../Utils/CustomErrorHandler.js';
 import asyncFunHandler from '../Utils/asyncFunHandler.js';
@@ -423,6 +424,7 @@ export const deleteUserById = asyncFunHandler(async (req, res, next) => {
 
   // Handle role-specific deletions
   if (role === "client") {
+    await Customer.findOneAndDelete({ customerOf: user.id });
     await Client.findOneAndDelete({ userId: user.id });
   } else if (role === "driver") {
     await Driver.findOneAndDelete({ userId: user.id });

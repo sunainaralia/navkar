@@ -12,7 +12,8 @@ mongoose.connect(process.env.CONN_STR).then((conn) => {
 //   console.log("unhandled error rejection ,server is shutting down !!!");
 //   process.exit(1);
 // })
-// listen the server 
+// listen the server
+
 const server = app.listen(process.env.PORT, () => {
   console.log("server is running successfully");
 });

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { signUpUser, LoginUser, getUserProfile, editUser, changePassword, forgotPassword, resetPassword, getAllClients, getAllAdmin, getAllDrivers, getUserProfileById, editUserById, deleteUserById } from "../Controllers/UserController.js";
-import VerifyToken from "../Controllers/VerifyToken.js";
+import VerifyToken from '../Middlewares/VerifyToken.js'
 
 export const userRouter = Router();
 userRouter.route('/')

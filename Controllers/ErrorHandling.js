@@ -20,7 +20,12 @@ const productionError = (error, res) => {
     });
   }
 };
-
+const missingTokenError = (error, res) => {
+  return res.status(401).json({
+    status: 401,
+    message: "Token is not provided or login is required",
+  });
+};
 const castError = (error, res) => {
   const err = `Your id ${error.value} is not correct for ${error.path} field`;
   return res.status(400).json({
@@ -78,6 +83,9 @@ const errorHandling = (error, req, res, next) => {
       default:
         if (error.code === 11000) {
           return duplicateError(error, res);
+        }
+        if (error.message === "token is not provided or login is required") {
+          return missingTokenError(error, res);
         }
         return productionError(error, res);
     }

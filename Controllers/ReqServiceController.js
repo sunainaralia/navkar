@@ -10,7 +10,6 @@ export const getAllContacts = asyncFunHandler(async (req, res, next) => {
   if (!contacts.length) {
     return next(new CustomErrorHandler("No contacts found", 404)); // Not Found
   }
-
   res.status(200).json({
     success: true,
     msg: "Contacts fetched successfully",
@@ -68,5 +67,5 @@ export const deleteContactById = asyncFunHandler(async (req, res, next) => {
     return next(new CustomErrorHandler("No contact found", 404));
   }
 
-  res.status(204).send(); // No content
+  res.status(204).send();
 });
