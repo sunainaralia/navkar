@@ -6,6 +6,7 @@ import { userRouter } from './Routes/UserRouter.js';
 import { contactRouter } from "./Routes/ContactRouter.js";
 import { CityRouter, ProvinceRouter, ZoneRouter, PostalCodeRouter } from "./Routes/ProvinceRouter.js";
 import { uploadRouter } from "./Routes/UploadRouter.js";
+import { contactUsRouter } from "./Routes/ContactUsRouter.js";
 import setupSwaggerDocs from "./Middlewares/swaggerConfig.js";
 
 const app = express();
@@ -36,7 +37,8 @@ app.use('/api/v1/zone/', ZoneRouter);
 app.use('/api/v1/postal/', PostalCodeRouter);
 // Routes for upload image
 app.use('/api/v1/upload/', uploadRouter);
-
+// routes for contact us
+app.use("/api/v1/contactus/", contactUsRouter)
 // Handle undefined routes
 app.all("*", (req, res, next) => {
   let err = new CustomErrorHandler(`The given URL ${req.originalUrl} is not present`, 400);
