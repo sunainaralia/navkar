@@ -13,15 +13,17 @@ const contactUsSchema = new mongoose.Schema({
     validate: [validator.isEmail, "Please enter a valid email"]
   },
   message: {
-    type: String,
-    required: [true, "Message is required"]
+    type: String
+  },
+  category: {
+    type: String
   },
   phone_no: {
     type: String,
     required: [true, "Phone number is required"],
     validate: {
       validator: function (v) {
-        return /^[0-9]{10}$/.test(v); 
+        return /^[0-9]{10}$/.test(v);
       },
       message: "Please enter a valid 10-digit phone number"
     }
