@@ -1,7 +1,7 @@
 const developmentError = (error, res) => {
   return res.status(error.errorStatus).json({
     status: error.errorStatus,
-    msg: error.msg,
+    msg: error.message,
     stackTrace: error.stack,
     error: error
   });
@@ -11,7 +11,7 @@ const productionError = (error, res) => {
   if (error.isOprationError) {
     return res.status(error.errorStatus).json({
       status: error.errorStatus,
-      msg: error.msg,
+      msg: error.message,
     });
   } else {
     return res.status(500).json({
@@ -43,7 +43,7 @@ const duplicateError = (error, res) => {
 };
 
 const validationError = (error, res) => {
-  const errMsg = Object.values(error.errors).map(err => err.msg);
+  const errMsg = Object.values(error.errors).map(err => err.message);
   return res.status(400).json({
     status: 400,
     msg: `Validation Error: ${errMsg.join(". ")}`,
@@ -67,7 +67,6 @@ const tokenExpiredError = (error, res) => {
 const errorHandling = (error, req, res, next) => {
   error.errorStatus = error.errorStatus || 500;
   error.status = error.status || 'error';
-
   if (process.env.NODE_ENV === "development") {
     return developmentError(error, res);
   } else {
@@ -84,7 +83,7 @@ const errorHandling = (error, req, res, next) => {
         if (error.code === 11000) {
           return duplicateError(error, res);
         }
-        if (error.msg === "token is not provided or login is required") {
+        if (error.message === "token is not provided or login is required") {
           return missingTokenError(error, res);
         }
         return productionError(error, res);

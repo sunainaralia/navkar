@@ -19,6 +19,7 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
 
   // Create the common user data in User model
   const newUser = await User.create({ name, email, phone_no, password, role, confirmPassword, zone_assigned, status });
+ 
 
   // Generate authentication token
   const token = genrateToken(newUser._id);
@@ -85,7 +86,7 @@ export const LoginUser = asyncFunHandler(async (req, res, next) => {
     data: user,
     token
   })
-});
+})
 
 ////////////////////////// get client profile //////////////////
 export const getUserProfile = asyncFunHandler(async (req, res, next) => {
