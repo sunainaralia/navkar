@@ -3,8 +3,7 @@ import CustomErrorHandler from "../Utils/CustomErrorHandler.js";
 export const imageUpload = function (req, res, next) {
   cloudinaryConfig.uploader.upload(req.file.path, function (err, result) {
     if (err) {
-      const error = new CustomErrorHandler(err[msg])
-      next(error)
+      next(err)
     } else {
       res.status(201).json({
         success: true,
