@@ -36,7 +36,7 @@ export const getCustomerById = asyncFunHandler(async (req, res, next) => {
 
 // Update customer by ID with token verification
 export const updateCustomerById = asyncFunHandler(async (req, res, next) => {
-  const userId = req.user._id;
+  const userId = await Customer.findById(req.params.id);
 
   const customer = await Customer.findOneAndUpdate(
     { _id: req.params.id, user: userId },
@@ -93,23 +93,21 @@ export const createOrder = asyncFunHandler(async (req, res, next) => {
 // Controller to get all orders
 export const getAllOrders = asyncFunHandler(async (req, res, next) => {
   const orders = await Order.find().populate('userId');
-
-  if (!orders.length) {
-    return next(new CustomErrorHandler("No orders found", 404));
-  }
-
   res.status(200).json({
     success: true,
     data: orders
   });
 });
 
-// Controller to get an order by ID
-export const getOrderById = asyncFunHandler(async (req, res, next) => {
-  const order = await Order.findById(req.params.id).populate('userId');
+// Controller to get an order by userId
+export const getOrderByUserId = asyncFunHandler(async (req, res, next) => {
+  const { userId } = req.params;
+
+  // Fetch the order using userId instead of order ID
+  const order = await Order.findOne({ userId }).populate('userId');
 
   if (!order) {
-    return next(new CustomErrorHandler("Order not found", 404));
+    return next(new CustomErrorHandler("Order not found for the provided user ID", 404));
   }
 
   res.status(200).json({
@@ -117,6 +115,7 @@ export const getOrderById = asyncFunHandler(async (req, res, next) => {
     data: order
   });
 });
+
 
 // Controller to update an order by ID
 export const updateOrderByCustomerId = asyncFunHandler(async (req, res, next) => {

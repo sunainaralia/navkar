@@ -5,7 +5,14 @@ const CustomerSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   businessName: { type: String },
   email: { type: String, required: true, unique: true },
-  mobileNumber: { type: String, required: true, unique: true },
+  mobileNumber: {type: String,
+  required: [true, "Phone number is required"],
+  validate: {
+    validator: function (v) {
+      return /^[0-9]{10}$/.test(v);
+    },
+    message: "Please enter a valid 10-digit phone number"
+  }},
   province: String,
   city: String,
   postalCode: Number,

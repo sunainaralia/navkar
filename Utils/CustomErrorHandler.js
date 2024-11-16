@@ -3,7 +3,7 @@ class CustomErrorHandler extends Error {
     super(errorMsg);
     this.errorStatus = errorStatus
     this.status = ((this.errorStatus > 400) && (this.errorStatus < 500)) ? 'fail' : 'error';
-    this.isOprationalError = true
+    this.isOprationError = true;
     Error.captureStackTrace(this,this.constructor)
   }
 };

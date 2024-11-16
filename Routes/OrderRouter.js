@@ -1,11 +1,34 @@
 import { Router } from "express";
-import VerifyToken from '../Middlewares/VerifyToken.js'
-import { getAllContacts, getContactById, deleteContactById, createContact } from "../Controllers/ReqServiceController.js";
+import VerifyToken from '../Middlewares/VerifyToken.js';
+import {
+  createCustomer,
+  getAllCustomers,
+  getCustomerById,
+  updateCustomerById,
+  createOrder,
+  getAllOrders,
+  getOrderByUserId,
+  updateOrderByCustomerId
+} from "../Controllers/OrderController.js";
 
-export const contactRouter = Router();
-contactRouter.route('/')
-  .post(createContact)
-  .get(VerifyToken, getAllContacts)
-contactRouter.route('/:id/')
-  .delete(VerifyToken, deleteContactById)
-  .get(VerifyToken, getContactById);
+const clientOrderRouter = Router();
+
+// ============================ Customer Routes ============================
+clientOrderRouter.route('/customers')
+  .post(createCustomer)
+  .get(VerifyToken, getAllCustomers);
+clientOrderRouter.route('/customers/:id')
+  .get(VerifyToken, getCustomerById)
+  .patch(VerifyToken, updateCustomerById); 
+
+// ============================ Order Routes ============================
+clientOrderRouter.route('/')
+  .post(VerifyToken, createOrder)
+  .get(VerifyToken, getAllOrders)
+
+// Get a specific order by userId
+clientOrderRouter.route('/:userId')
+  .get(VerifyToken, getOrderByUserId)
+  .patch(VerifyToken, updateOrderByCustomerId)
+
+export default clientOrderRouter;
