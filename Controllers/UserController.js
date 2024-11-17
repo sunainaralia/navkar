@@ -6,27 +6,57 @@ import asyncFunHandler from '../Utils/asyncFunHandler.js';
 import sendEmail from '../Utils/SendMail.js';
 import crypto from 'crypto';
 const { sign } = pkg;
+import bcryptjs from 'bcryptjs';
 ///////////////////// genrate token ////////////////
 const genrateToken = (id) => {
   return sign({ id }, process.env.SECRET_KEY, {
     expiresIn: process.env.EXPIRED_TIME
   })
 };
-
-/////////////////////// register the client ///////////////////
+// sign up the client /driver / admins
 export const signUpUser = asyncFunHandler(async (req, res, next) => {
-  const { name, email, phone_no, password, role, confirmPassword, zone_assigned, status, ...roleSpecificData } = req.body;
+  const {
+    name,
+    email,
+    phone_no,
+    password,
+    role,
+    confirmPassword,
+    zone_assigned,
+    status,
+    ...roleSpecificData
+  } = req.body;
+
+  // If password is not provided, generate a random 8-character password
+  let userPassword = password;
+  let userConfirmPassword = confirmPassword;
+
+  if (!password) {
+    // Generate random 8-character password
+    userPassword = crypto.randomBytes(4).toString('hex');
+    userConfirmPassword = userPassword;
+  }
+
+  // Encrypt the password
+  const hashedPassword = await bcryptjs.hash(userPassword, 10);
 
   // Create the common user data in User model
-  const newUser = await User.create({ name, email, phone_no, password, role, confirmPassword, zone_assigned, status });
- 
+  const newUser = await User.create({
+    name,
+    email,
+    phone_no,
+    password: hashedPassword,
+    confirmPassword: hashedPassword,
+    role,
+    zone_assigned,
+    status
+  });
 
   // Generate authentication token
   const token = genrateToken(newUser._id);
+
   // Create the role-specific data in the appropriate model
   let roleData;
-
-  // Create the role-specific data in the appropriate model and retrieve it
   if (role === 'client') {
     const client = await Client.create({
       userId: newUser._id,
@@ -48,17 +78,13 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
     });
     roleData = driver;
   }
-  let responseData;
-  if (roleData) {
-    responseData = {
-      ...newUser.toObject(),
-      ...(roleData?.toObject() || {})
-    };
-  } else {
-    responseData = {
-      ...newUser.toObject(),
-    };
-  }
+
+  // Prepare response data
+  let responseData = {
+    ...newUser.toObject(),
+    ...(roleData?.toObject() || {})
+  };
+
   return res.status(201).json({
     success: true,
     msg: `${role} created successfully`,
@@ -66,6 +92,7 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
     token
   });
 });
+
 //////////////////////// login the client/////////////////////
 export const LoginUser = asyncFunHandler(async (req, res, next) => {
   const email = req.body.email;
