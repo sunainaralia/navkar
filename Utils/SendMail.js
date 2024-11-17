@@ -1,15 +1,22 @@
-import { createTransport } from 'nodemailer'
+import dotenv from 'dotenv';
+dotenv.config({ path: './config.env' });
+import nodemailer from 'nodemailer';
 const sendEmail = (option) => {
-  const transporter = createTransport({
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
+    secure: false,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD
     }
   });
   const emailOptions = {
-    from: `sunaina ralia<sunainaralia@gmail.com>`,
+    from: {
+      name: "Navkar Logistics",
+      address: process.env.EMAIL_USER
+    },
     to: option.email,
     subject: option.subject,
     text: option.msg

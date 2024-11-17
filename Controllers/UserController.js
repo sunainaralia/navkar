@@ -205,10 +205,10 @@ export const forgotPassword = asyncFunHandler(async (req, res, next) => {
   // send token to the user
   const resetToken = await user.resetPasswordToken();
   await user.save({ validateBeforeSave: false });
-  const url = `${req.protocol}://${req.get('host')}/v1/api/user/resetPassword/${resetToken}/`;
+  const url = `${req.protocol}://${req.get('host')}/v1/api/user/resetPassword/?reset_token=${resetToken}/`;
   const msg = `email is sent to your registered email plz reset your password by click on following link \n\n ${url}\n\n\n and this is valid upto ${user.resetTokenExpiresIn}`
   try {
-    await sendEmail({
+    sendEmail({
       msg: msg,
       email: user.email,
       subject: "email for reset password"
