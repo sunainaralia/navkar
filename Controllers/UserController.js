@@ -460,6 +460,6 @@ export const deleteUserById = asyncFunHandler(async (req, res, next) => {
   await User.findByIdAndDelete(req.params.id);
   res.status(200).json({
     success: true,
-    msg: "user is deleted successfully"
+    msg: `${role} is deleted successfully`
   });
 });
