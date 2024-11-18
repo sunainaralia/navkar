@@ -457,9 +457,8 @@ export const deleteUserById = asyncFunHandler(async (req, res, next) => {
   } else if (role === "driver") {
     await Driver.findOneAndDelete({ userId: user.id });
   }
-
   await User.findByIdAndDelete(req.params.id);
-  res.status(204).json({
+  res.status(200).json({
     success: true,
     msg: "user is deleted successfully"
   });

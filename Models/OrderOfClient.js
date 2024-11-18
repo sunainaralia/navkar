@@ -5,14 +5,16 @@ const CustomerSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
   businessName: { type: String },
   email: { type: String, required: true, unique: true },
-  mobileNumber: {type: String,
-  required: [true, "Phone number is required"],
-  validate: {
-    validator: function (v) {
-      return /^[0-9]{10}$/.test(v);
-    },
-    message: "Please enter a valid 10-digit phone number"
-  }},
+  mobileNumber: {
+    type: String,
+    required: [true, "Phone number is required"],
+    validate: {
+      validator: function (v) {
+        return /^[0-9]{10}$/.test(v);
+      },
+      message: "Please enter a valid 10-digit phone number"
+    }
+  },
   province: String,
   city: String,
   postalCode: Number,
@@ -50,7 +52,6 @@ const OrderSchema = new mongoose.Schema({
   },
   track_order: {
     type: String,
-
   },
   assigned_driver: {
     type: mongoose.Schema.Types.ObjectId,
@@ -70,6 +71,12 @@ const OrderSchema = new mongoose.Schema({
     type: Date
   },
   shift: {
+    type: String
+  },
+  driver_assigned_date: {
+    type: Date
+  },
+  reciever_sign: {
     type: String
   }
 }, { timestamps: true });
