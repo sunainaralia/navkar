@@ -48,17 +48,14 @@ const OrderSchema = new mongoose.Schema({
   msg: String,
   order_status: {
     type: String,
-    default: "picked"
+    default: "requested"
   },
   track_order: {
     type: String,
   },
   assigned_driver: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-  },
-  reason: {
-    type: String
+    ref: "User"
   },
   isDriverUpdated: {
     type: Boolean,
@@ -73,10 +70,39 @@ const OrderSchema = new mongoose.Schema({
   shift: {
     type: String
   },
-  driver_assigned_date: {
-    type: Date
-  },
   reciever_sign: {
+    type: String
+  },
+  status_logs: [
+    {
+      status: {
+        type: String,
+        required: true
+      },
+      timestamp: {
+        type: Date,
+        default: Date.now
+      },
+      note: {
+        type: String,
+        default: ''
+      }
+    }
+  ],
+  driver_logs: [
+    {
+      driverId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+      },
+      assigned_date: {
+        type: Date,
+        default: Date.now
+      },
+      note: String
+    }
+  ],
+  reason: {
     type: String
   }
 }, { timestamps: true });

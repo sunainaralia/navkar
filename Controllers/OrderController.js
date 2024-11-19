@@ -2,7 +2,6 @@ import { Customer } from '../Models/OrderOfClient.js';
 import Order from '../Models/OrderOfClient.js';
 import asyncFunHandler from '../Utils/asyncFunHandler.js';
 import CustomErrorHandler from '../Utils/CustomErrorHandler.js';
-
 // Create a new Customer
 export const createCustomer = asyncFunHandler(async (req, res, next) => {
   const customer = await Customer.create(req.body);
@@ -13,7 +12,7 @@ export const createCustomer = asyncFunHandler(async (req, res, next) => {
   });
 });
 
-// Get all Customers
+// ////////////////////////////////Get all Customers////////////////////////////
 export const getAllCustomers = asyncFunHandler(async (req, res, next) => {
   const customers = await Customer.find()
   res.status(200).json({
@@ -34,7 +33,7 @@ export const getCustomerById = asyncFunHandler(async (req, res, next) => {
   });
 });
 
-// Update customer by ID with token verification
+/////////////////////////////// Update customer by ID ///////////////////////////////////
 export const updateCustomerById = asyncFunHandler(async (req, res, next) => {
   const userId = await Customer.findById(req.params.id);
 
@@ -56,12 +55,15 @@ export const updateCustomerById = asyncFunHandler(async (req, res, next) => {
     data: customer,
   });
 });
-
-// Controller to create an order
+///////////////////////////////////// create order///////////////////////////////
 export const createOrder = asyncFunHandler(async (req, res, next) => {
-  const { userId, address2, service_type, msg, assigned_driver, reason, pickUpDate, DropUpDate, shift } = req.body;
+  const {
+    userId, address2, service_type, msg,
+    assigned_driver, pickUpDate,
+    DropUpDate, shift
+  } = req.body;
 
-  // Ensure customer exists
+  // Ensure the customer exists
   const customer = await Customer.findById(userId);
   if (!customer) {
     return next(new CustomErrorHandler("Customer not found", 404));
@@ -74,28 +76,36 @@ export const createOrder = asyncFunHandler(async (req, res, next) => {
     service_type,
     msg,
     assigned_driver,
-    reason,
     pickUpDate,
     DropUpDate,
-    shift
+    shift,
+    status_logs: [
+      {
+        status: "requested",
+        timestamp: new Date(),
+        note: "Order created with initial status as 'requested'",
+      },
+    ],
   });
 
-  // Save the order, triggering the 'pre-save' middleware to set the track_order
+  // Save the order
   await order.save();
 
   res.status(201).json({
     success: true,
     msg: "Order created successfully",
-    data: order
+    data: order,
   });
 });
+
 
 // Controller to get all orders
 export const getAllOrders = asyncFunHandler(async (req, res, next) => {
   const orders = await Order.find().populate('userId');
   res.status(200).json({
     success: true,
-    data: orders
+    data: orders,
+    msg: "all Order get successfully",
   });
 });
 
@@ -112,28 +122,86 @@ export const getOrderByUserId = asyncFunHandler(async (req, res, next) => {
 
   res.status(200).json({
     success: true,
-    data: order
+    data: order,
+    msg: "order is retrieved successfully"
   });
 });
 
 
 // Controller to update an order by ID
 export const updateOrderByCustomerId = asyncFunHandler(async (req, res, next) => {
-  const { customer_id } = req.params;
-  const updatedOrder = await Order.findOneAndUpdate(
-    { customer_id },
-    req.body,
-    { new: true, runValidators: true }
-  );
+  const { userId } = req.params;
+  const { order_status, assigned_driver, reason, ...updateData } = req.body;
 
-  if (!updatedOrder) {
+  // Find the order for the given customer
+  const order = await Order.findById(userId);
+  if (!order) {
     return next(new CustomErrorHandler("Order not found", 404));
   }
 
+  // Handle order status updates
+  if (order_status && order_status !== order.order_status) {
+    order.order_status = order_status;
+    order.status_logs.push({
+      status: order_status,
+      timestamp: new Date(),
+      note: `Order status updated to '${order_status}'`,
+    });
+  }
+
+  // Handle driver assignments
+  if (assigned_driver) {
+    const isDriverAssigned =
+      order.assigned_driver && order.assigned_driver.toString() === assigned_driver;
+
+    if (!isDriverAssigned) {
+      // Update assigned driver
+      order.assigned_driver = assigned_driver;
+
+      // Log the new driver assignment
+      order.driver_logs.push({
+        driverId: assigned_driver,
+        assigned_date: new Date(),
+        note: `Driver assigned to the order`,
+        reason: reason || "No reason provided",
+      });
+
+      // Mark the driver as updated
+      order.isDriverUpdated = true;
+    } else if (reason) {
+      // Log reassignment with the reason
+      order.driver_logs.push({
+        driverId: assigned_driver,
+        assigned_date: new Date(),
+        note: `Driver reassigned to the order`,
+        reason: reason,
+      });
+    }
+  }
+
+  // Update other order details (address2, service_type, msg, etc.)
+  Object.assign(order, updateData);
+
+  // Save the updated order
+  await order.save();
+
   res.status(200).json({
     success: true,
-    msg: "Order updated successfully",
-    data: updatedOrder
+    msg: "Order updated successfully with logs",
+    data: order,
   });
 });
 
+
+// get order by tracking order id 
+export const getOrderByTrackingCode = asyncFunHandler(async (req, res, next) => {
+  const { track_order } = req.params;
+  const getOrder = await Order.findOne({ track_order });
+  if (!getOrder) {
+    return next(new CustomErrorHandler("Order not found", 404));
+  }
+  res.status(200).json({
+    success: true,
+    data: getOrder
+  })
+});

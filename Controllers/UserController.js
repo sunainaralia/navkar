@@ -29,6 +29,7 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
 
   // If password is not provided, generate a random 8-character password
   let userPassword = password;
+  console.log(password)
   let userConfirmPassword = confirmPassword;
 
   if (!password) {
@@ -37,16 +38,13 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
     userConfirmPassword = userPassword;
   }
 
-  // Encrypt the password
-  const hashedPassword = await bcryptjs.hash(userPassword, 10);
-
   // Create the common user data in User model
   const newUser = await User.create({
     name,
     email,
     phone_no,
-    password: hashedPassword,
-    confirmPassword: hashedPassword,
+    password: userPassword,
+    confirmPassword: userConfirmPassword,
     role,
     zone_assigned,
     status
@@ -65,7 +63,6 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
       city: roleSpecificData.city,
       postalCode: roleSpecificData.postalCode,
       address1: roleSpecificData.address1,
-      address2: roleSpecificData.address2,
     });
     roleData = client;
   } else if (role === 'driver') {
