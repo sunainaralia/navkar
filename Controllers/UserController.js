@@ -152,14 +152,14 @@ export const getUserProfile = asyncFunHandler(async (req, res, next) => {
 //////////////// update the client profile //////////////////
 export const editUser = asyncFunHandler(async (req, res) => {
   let role = req.user.role
-  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, address2, license, license_image, availability, address } = req.body;
+  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address } = req.body;
   const getUserndUpdate = await User.findByIdAndUpdate(req.user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status }, { new: true, runValidators: true });
   // Update role-specific data in the appropriate model
   let roleData;
   if (role === 'client') {
     roleData = await Client.findOneAndUpdate(
       { userId: req.user.id },
-      { businessName, province, city, postalCode, address1, address2 },
+      { businessName, province, city, postalCode, address1},
       { new: true, runValidators: true }
     );
   } else if (role === 'driver') {
@@ -299,8 +299,7 @@ export const getAllClients = asyncFunHandler(async (req, res, next) => {
     province: client.province,
     city: client.city,
     postalCode: client.postalCode,
-    address1: client.address1,
-    address2: client.address2,
+    address1: client.address1
   }));
   res.status(200).json({
     success: true,
