@@ -8,7 +8,8 @@ import {
   createOrder,
   getAllOrders,
   getOrderByUserId,
-  updateOrderByCustomerId
+  updateOrderByCustomerId,
+  getOrderByTrackingCode
 } from "../Controllers/OrderController.js";
 
 const clientOrderRouter = Router();
@@ -19,7 +20,7 @@ clientOrderRouter.route('/customers')
   .get(VerifyToken, getAllCustomers);
 clientOrderRouter.route('/customers/:id')
   .get(VerifyToken, getCustomerById)
-  .patch(VerifyToken, updateCustomerById); 
+  .patch(VerifyToken, updateCustomerById);
 
 // ============================ Order Routes ============================
 clientOrderRouter.route('/')
@@ -30,5 +31,9 @@ clientOrderRouter.route('/')
 clientOrderRouter.route('/:userId')
   .get(VerifyToken, getOrderByUserId)
   .patch(VerifyToken, updateOrderByCustomerId)
+
+// get all order logs using tracking code
+clientOrderRouter.route("/track-order/:track_order")
+  .get(VerifyToken, getOrderByTrackingCode)
 
 export default clientOrderRouter;

@@ -91,13 +91,15 @@ export const createOrder = asyncFunHandler(async (req, res, next) => {
   // Save the order
   await order.save();
 
+  // Populate the userId field with user details
+  const populatedOrder = await Order.findById(order._id).populate('userId');
+
   res.status(201).json({
     success: true,
     msg: "Order created successfully",
-    data: order,
+    data: populatedOrder,
   });
 });
-
 
 // Controller to get all orders
 export const getAllOrders = asyncFunHandler(async (req, res, next) => {
@@ -184,11 +186,11 @@ export const updateOrderByCustomerId = asyncFunHandler(async (req, res, next) =>
 
   // Save the updated order
   await order.save();
-
+  const populatedOrder = await Order.findById(order._id).populate('userId');
   res.status(200).json({
     success: true,
     msg: "Order updated successfully with logs",
-    data: order,
+    data: populatedOrder,
   });
 });
 
@@ -196,12 +198,13 @@ export const updateOrderByCustomerId = asyncFunHandler(async (req, res, next) =>
 // get order by tracking order id 
 export const getOrderByTrackingCode = asyncFunHandler(async (req, res, next) => {
   const { track_order } = req.params;
-  const getOrder = await Order.findOne({ track_order });
+  const getOrder = await Order.findOne({ track_order }).populate('userId');
   if (!getOrder) {
     return next(new CustomErrorHandler("Order not found", 404));
   }
   res.status(200).json({
     success: true,
-    data: getOrder
+    data: getOrder,
+    msg: "order logs are found"
   })
 });
