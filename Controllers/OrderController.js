@@ -55,6 +55,7 @@ export const updateCustomerById = asyncFunHandler(async (req, res, next) => {
     data: customer,
   });
 });
+
 ///////////////////////////////////// create order///////////////////////////////
 export const createOrder = asyncFunHandler(async (req, res, next) => {
   const {
@@ -101,19 +102,26 @@ export const createOrder = asyncFunHandler(async (req, res, next) => {
   });
 });
 
-// Controller to get all orders
+//////////////////////// Controller to get all orders //////////////////////////
 export const getAllOrders = asyncFunHandler(async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
+  const { order_status } = req.query;
 
   // Calculate the skip value
   const skip = (page - 1) * limit;
 
-  // Get total count of orders for pagination metadata
-  const totalOrders = await Order.countDocuments();
+  // Build the filter condition
+  const filter = {};
+  if (order_status) {
+    filter.order_status = order_status; // Apply the status filter only if provided
+  }
+
+  // Get total count of orders matching the filter for pagination metadata
+  const totalOrders = await Order.countDocuments(filter);
 
   // Fetch paginated orders
-  const orders = await Order.find()
+  const orders = await Order.find(filter)
     .populate('userId')
     .skip(skip)
     .limit(limit);
@@ -132,7 +140,8 @@ export const getAllOrders = asyncFunHandler(async (req, res, next) => {
 });
 
 
-// Controller to get an order by userId
+
+//////////////////////////////  Controller to get an order by userId ///////////////////////
 export const getOrderByUserId = asyncFunHandler(async (req, res, next) => {
   const { userId } = req.params;
 
@@ -151,7 +160,7 @@ export const getOrderByUserId = asyncFunHandler(async (req, res, next) => {
 });
 
 
-// Controller to update an order by ID
+///////////////////////////////// Controller to update an order by ID //////////////////////////////
 export const updateOrderByCustomerId = asyncFunHandler(async (req, res, next) => {
   const { userId } = req.params;
   const { order_status, assigned_driver, reason, ...updateData } = req.body;

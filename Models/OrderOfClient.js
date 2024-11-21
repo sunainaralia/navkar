@@ -50,6 +50,9 @@ const OrderSchema = new mongoose.Schema({
     type: String,
     default: "requested"
   },
+  delieverd_to: {
+    type: String
+  },
   track_order: {
     type: String,
   },
