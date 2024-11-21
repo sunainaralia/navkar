@@ -29,7 +29,6 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
 
   // If password is not provided, generate a random 8-character password
   let userPassword = password;
-  console.log(password)
   let userConfirmPassword = confirmPassword;
 
   if (!password) {
