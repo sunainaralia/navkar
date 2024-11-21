@@ -103,13 +103,34 @@ export const createOrder = asyncFunHandler(async (req, res, next) => {
 
 // Controller to get all orders
 export const getAllOrders = asyncFunHandler(async (req, res, next) => {
-  const orders = await Order.find().populate('userId');
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  // Calculate the skip value
+  const skip = (page - 1) * limit;
+
+  // Get total count of orders for pagination metadata
+  const totalOrders = await Order.countDocuments();
+
+  // Fetch paginated orders
+  const orders = await Order.find()
+    .populate('userId')
+    .skip(skip)
+    .limit(limit);
+
   res.status(200).json({
     success: true,
     data: orders,
-    msg: "all Order get successfully",
+    msg: "Orders fetched successfully",
+    pagination: {
+      totalOrders,
+      currentPage: page,
+      totalPages: Math.ceil(totalOrders / limit),
+      limit,
+    },
   });
 });
+
 
 // Controller to get an order by userId
 export const getOrderByUserId = asyncFunHandler(async (req, res, next) => {

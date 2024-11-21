@@ -159,7 +159,7 @@ export const editUser = asyncFunHandler(async (req, res) => {
   if (role === 'client') {
     roleData = await Client.findOneAndUpdate(
       { userId: req.user.id },
-      { businessName, province, city, postalCode, address1},
+      { businessName, province, city, postalCode, address1 },
       { new: true, runValidators: true }
     );
   } else if (role === 'driver') {
@@ -279,7 +279,13 @@ export const resetPassword = asyncFunHandler(async (req, res, next) => {
 
 export const getAllClients = asyncFunHandler(async (req, res, next) => {
   // Fetch all clients and populate the user data
-  const clients = await Client.find().populate('userId');
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  // Calculate the skip value
+  const skip = (page - 1) * limit;
+  const totalClients = await Client.countDocuments();
+  const clients = await Client.find().populate('userId').skip(skip).limit(limit);
   // If no clients are found
   if (!clients.length) {
     let err = new CustomErrorHandler("no client found", 404);
@@ -304,29 +310,60 @@ export const getAllClients = asyncFunHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     msg: "all Clients fetched successfully",
-    data: formattedClients
+    data: formattedClients,
+    pagination: {
+      totalClients,
+      currentPage: page,
+      totalPages: Math.ceil(totalClients / limit),
+      limit,
+    },
   });
 });
 
 // ///////////////////////////// get all admin ////////////////////////
 export const getAllAdmin = asyncFunHandler(async (req, res, next) => {
-  let admin = await User.find({ role: { $nin: ['client', 'driver'] } });
-  if (!admin.length) {
-    let err = new CustomErrorHandler("no admin found", 404);
+  const { page = 1, limit = 10 } = req.query; // Default values for page and limit
+
+  // Convert page and limit to numbers
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  const skip = (pageNumber - 1) * limitNumber; // Calculate the number of documents to skip
+
+  const admins = await User.find({ role: { $nin: ['client', 'driver'] } })
+    .skip(skip)
+    .limit(limitNumber);
+
+  const totalAdmins = await User.countDocuments({ role: { $nin: ['client', 'driver'] } });
+
+  if (!admins.length) {
+    let err = new CustomErrorHandler("No admin found", 404);
     return next(err);
   }
+
   return res.status(200).json({
     success: true,
-    msg: "all admin are getting successfully",
-    data: admin
-  })
-
+    msg: "All admins fetched successfully",
+    data: admins,
+    pagination: {
+      totalAdmins,
+      currentPage: page,
+      totalPages: Math.ceil(totalAdmins / limit),
+      limit,
+    },
+  });
 });
+
 
 ///////////////////////////////// get all drivers/////////////////////////////////////
 export const getAllDrivers = asyncFunHandler(async (req, res, next) => {
-  // Fetch all drivers and populate the user data
-  const drivers = await Driver.find().populate('userId');
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+
+  // Calculate the skip value
+  const skip = (page - 1) * limit;
+  const totalDrivers = await Driver.countDocuments();
+  const drivers = await Driver.find().populate('userId').skip(skip).limit(limit);;
   // If no drivers are found
   if (!drivers.length) {
     let err = new CustomErrorHandler("no driver found", 404);
@@ -351,7 +388,13 @@ export const getAllDrivers = asyncFunHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     msg: "all drivers fetched successfully",
-    data: formattedDrivers
+    data: formattedDrivers,
+    pagination: {
+      totalDrivers,
+      currentPage: page,
+      totalPages: Math.ceil(totalDrivers / limit),
+      limit,
+    },
   });
 });
 
@@ -405,7 +448,7 @@ export const editUserById = asyncFunHandler(async (req, res) => {
   if (role === 'client') {
     roleData = await Client.findOneAndUpdate(
       { userId: user.id },
-      { businessName, province, city, postalCode, address1},
+      { businessName, province, city, postalCode, address1 },
       { new: true, runValidators: true }
     );
   } else if (role === 'driver') {

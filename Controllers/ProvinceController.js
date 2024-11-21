@@ -5,11 +5,56 @@ import mongoose from 'mongoose';
 
 // ////////////////////get all provinces//////////////////
 export const getAllProvinces = asyncFunHandler(async (req, res, next) => {
-  const provinces = await Province.find();
+  const { page = 1, limit = 10 } = req.query; // Default values for page and limit
+
+  // Convert page and limit to numbers
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  const skip = (pageNumber - 1) * limitNumber; // Calculate the number of documents to skip
+
+  // Aggregate pipeline with pagination
+  const provinces = await Province.aggregate([
+    {
+      $lookup: {
+        from: 'cities', // Join with the City collection
+        localField: '_id', // Province._id
+        foreignField: 'province', // City.province
+        as: 'cities', // Name of the joined array
+      },
+    },
+    {
+      $addFields: {
+        totalCities: { $size: '$cities' }, // Count the cities in the joined array
+      },
+    },
+    {
+      $project: {
+        cities: 0, // Exclude the joined cities array (optional)
+      },
+    },
+    { $skip: skip }, // Skip documents for previous pages
+    { $limit: limitNumber }, // Limit the number of documents
+  ]);
+
+  // Get the total number of provinces
+  const totalProvinces = await Province.countDocuments();
+
   if (!provinces.length) {
     return next(new CustomErrorHandler("No provinces found", 404));
   }
-  res.status(200).json({ success: true, msg: "Provinces fetched successfully", data: provinces });
+
+  res.status(200).json({
+    success: true,
+    msg: "Provinces fetched successfully",
+    data: provinces,
+    pagination: {
+      total: totalProvinces,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalProvinces / limitNumber),
+      perPage: limitNumber,
+    },
+  });
 });
 
 
@@ -18,7 +63,6 @@ export const createProvince = asyncFunHandler(async (req, res, next) => {
   const province = await Province.create(req.body);
   res.status(201).json({ success: true, msg: "Province created successfully", data: province });
 });
-
 
 
 //////////////////////get province id//////////////////////
@@ -76,11 +120,38 @@ export const updateProvinceById = asyncFunHandler(async (req, res, next) => {
 
 /////////////////////// get all City APIs ///////////////////////
 export const getAllCities = asyncFunHandler(async (req, res, next) => {
-  const cities = await City.find().populate('province');
+  const { page = 1, limit = 10 } = req.query; // Default values for page and limit
+
+  // Convert page and limit to numbers
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  const skip = (pageNumber - 1) * limitNumber; // Calculate the number of documents to skip
+
+  // Fetch the cities with pagination and populate the 'province' field
+  const cities = await City.find()
+    .populate('province')
+    .skip(skip)
+    .limit(limitNumber);
+
+  // Get the total count of cities
+  const totalCities = await City.countDocuments();
+
   if (!cities.length) {
     return next(new CustomErrorHandler("No cities found", 404));
   }
-  res.status(200).json({ success: true, msg: "Cities fetched successfully", data: cities });
+
+  res.status(200).json({
+    success: true,
+    msg: "Cities fetched successfully",
+    data: cities,
+    pagination: {
+      total: totalCities,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalCities / limitNumber),
+      perPage: limitNumber,
+    },
+  });
 });
 
 // ///////////////////// post city//////////////////////////
@@ -130,12 +201,37 @@ export const deleteCityById = asyncFunHandler(async (req, res, next) => {
 
 /////////////////////// get all PostalCode API ///////////////////////
 export const getAllPostalCodes = asyncFunHandler(async (req, res, next) => {
-  const postalCodes = await PostalCode.find();
+  const { page = 1, limit = 10 } = req.query; // Default values for page and limit
+
+  // Convert page and limit to numbers
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  const skip = (pageNumber - 1) * limitNumber; // Calculate the number of documents to skip
+
+  // Fetch postal codes with pagination
+  const postalCodes = await PostalCode.find().skip(skip).limit(limitNumber);
+
+  // Get the total count of postal codes
+  const totalPostalCodes = await PostalCode.countDocuments();
+
   if (!postalCodes.length) {
     return next(new CustomErrorHandler("No postal codes found", 404));
   }
-  res.status(200).json({ success: true, msg: "Postal codes fetched successfully", data: postalCodes });
+
+  res.status(200).json({
+    success: true,
+    msg: "Postal codes fetched successfully",
+    data: postalCodes,
+    pagination: {
+      total: totalPostalCodes,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalPostalCodes / limitNumber),
+      perPage: limitNumber,
+    },
+  });
 });
+
 
 // //////////////////////// create postal code api///////////////////////////////
 export const createPostalCode = asyncFunHandler(async (req, res, next) => {
@@ -187,12 +283,40 @@ export const updatePostalCodeById = asyncFunHandler(async (req, res, next) => {
 });
 ///////////////////////find all Zone APIs ///////////////////////
 export const getAllZones = asyncFunHandler(async (req, res, next) => {
-  const zones = await Zone.find().populate('postalCode');
+  const { page = 1, limit = 10 } = req.query; // Default values for page and limit
+
+  // Convert page and limit to numbers
+  const pageNumber = parseInt(page, 10);
+  const limitNumber = parseInt(limit, 10);
+
+  const skip = (pageNumber - 1) * limitNumber; // Calculate the number of documents to skip
+
+  // Fetch zones with pagination and populate the 'postalCode' field
+  const zones = await Zone.find()
+    .populate('postalCode')
+    .skip(skip)
+    .limit(limitNumber);
+
+  // Get the total count of zones
+  const totalZones = await Zone.countDocuments();
+
   if (!zones.length) {
     return next(new CustomErrorHandler("No zones found", 404));
   }
-  res.status(200).json({ success: true, msg: "Zones fetched successfully", data: zones });
+
+  res.status(200).json({
+    success: true,
+    msg: "Zones fetched successfully",
+    data: zones,
+    pagination: {
+      total: totalZones,
+      currentPage: pageNumber,
+      totalPages: Math.ceil(totalZones / limitNumber),
+      perPage: limitNumber,
+    },
+  });
 });
+
 // //////////////////////// create zone api//////////////////////
 export const createZone = asyncFunHandler(async (req, res, next) => {
   const zone = new Zone(req.body);
