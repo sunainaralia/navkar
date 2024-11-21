@@ -155,11 +155,43 @@ export const getAllCities = asyncFunHandler(async (req, res, next) => {
 });
 
 // ///////////////////// post city//////////////////////////
+
 export const createCity = asyncFunHandler(async (req, res, next) => {
-  const city = new City(req.body);
+  const { city_name, province } = req.body;
+
+  if (!city_name || !province) {
+    return next(new CustomErrorHandler("City name and Province name are required", 400));
+  }
+
+  // Check if the province exists
+  let existingProvince = await Province.findOne({ province_name: province });
+
+  if (!existingProvince) {
+    // Create a new province
+    existingProvince = new Province({ province_name: province });
+    await existingProvince.save();
+  }
+
+  // Create the city with the province ID
+  const city = new City({
+    city_name,
+    province: existingProvince._id,
+  });
+
   await city.save();
-  res.status(201).json({ success: true, msg: "City created successfully", data: city });
+
+  // Send response with city and province details
+  res.status(201).json({
+    success: true,
+    msg: "City created successfully",
+    data: {
+      city_name: city.city_name,
+      province: existingProvince.province_name,
+    },
+  });
 });
+
+
 
 // ///////////////////////// get city by id//////////////
 export const getCityById = asyncFunHandler(async (req, res, next) => {
