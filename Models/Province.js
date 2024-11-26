@@ -55,8 +55,7 @@ export const PostalCode = mongoose.model('PostalCode', PostalCodeSchema);
 const ZoneSchema = new mongoose.Schema({
   postalCode: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'PostalCode',
-    required: true
+    ref: 'PostalCode'
   },
   zone_name: {
     type: String,

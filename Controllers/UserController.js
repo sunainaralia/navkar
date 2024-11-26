@@ -30,10 +30,11 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
   // If password is not provided, generate a random 8-character password
   let userPassword = password;
   let userConfirmPassword = confirmPassword;
-
+  let generatedPassword;
   if (!password) {
     // Generate random 8-character password
-    userPassword = crypto.randomBytes(4).toString('hex');
+    generatedPassword = crypto.randomBytes(4).toString('hex')
+    userPassword = generatedPassword;
     userConfirmPassword = userPassword;
   }
 
@@ -62,6 +63,7 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
       city: roleSpecificData.city,
       postalCode: roleSpecificData.postalCode,
       address1: roleSpecificData.address1,
+      address2: roleSpecificData.address2,
     });
     roleData = client;
   } else if (role === 'driver') {
@@ -80,7 +82,9 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
     ...newUser.toObject(),
     ...(roleData?.toObject() || {})
   };
-
+  if (generatedPassword) {
+    responseData.generatedPassword = generatedPassword;
+  }
   return res.status(201).json({
     success: true,
     msg: `${role} created successfully`,
@@ -151,14 +155,14 @@ export const getUserProfile = asyncFunHandler(async (req, res, next) => {
 //////////////// update the client profile //////////////////
 export const editUser = asyncFunHandler(async (req, res) => {
   let role = req.user.role
-  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address } = req.body;
+  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address,address2 } = req.body;
   const getUserndUpdate = await User.findByIdAndUpdate(req.user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status }, { new: true, runValidators: true });
   // Update role-specific data in the appropriate model
   let roleData;
   if (role === 'client') {
     roleData = await Client.findOneAndUpdate(
       { userId: req.user.id },
-      { businessName, province, city, postalCode, address1 },
+      { businessName, province, city, postalCode, address1 ,address2},
       { new: true, runValidators: true }
     );
   } else if (role === 'driver') {
@@ -304,7 +308,8 @@ export const getAllClients = asyncFunHandler(async (req, res, next) => {
     province: client.province,
     city: client.city,
     postalCode: client.postalCode,
-    address1: client.address1
+    address1: client.address1,
+    address2: client.address2
   }));
   res.status(200).json({
     success: true,
@@ -440,14 +445,14 @@ export const editUserById = asyncFunHandler(async (req, res) => {
     return next(new CustomErrorHandler("User not found", 404));
   };
   let role = user.role
-  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address } = req.body;
+  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address ,address2} = req.body;
   const getUserndUpdate = await User.findByIdAndUpdate(user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status }, { new: true, runValidators: true });
   // Update role-specific data in the appropriate model
   let roleData;
   if (role === 'client') {
     roleData = await Client.findOneAndUpdate(
       { userId: user.id },
-      { businessName, province, city, postalCode, address1 },
+      { businessName, province, city, postalCode, address1 ,address2},
       { new: true, runValidators: true }
     );
   } else if (role === 'driver') {

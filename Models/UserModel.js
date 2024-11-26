@@ -87,8 +87,11 @@ const ClientSchema = new mongoose.Schema(
       type: String,
       required: [true, "Please enter your adress"],
     },
-    price:{
-      type:Number
+    price: {
+      type: Number
+    },
+    address2: {
+      type: String,
     }
   },
 );
@@ -131,9 +134,6 @@ userSchema.pre('save', async function (next) {
 
 // method to compare the password
 userSchema.methods.comparePasswordInDb = async function (pass, passInDb) {
-  console.log(pass)
-  console.log(passInDb)
-  console.log()
   return await bcryptjs.compare(pass, passInDb);
 
 }

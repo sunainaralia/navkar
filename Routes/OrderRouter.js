@@ -9,11 +9,14 @@ import {
   getAllOrders,
   getOrderByUserId,
   updateOrderByCustomerId,
-  getOrderByTrackingCode
+  getOrderByTrackingCode,
+  getOrderStatusSummary
 } from "../Controllers/OrderController.js";
 
 const clientOrderRouter = Router();
-
+// get total no  of all order status
+clientOrderRouter.route("/sum-order")
+  .get(VerifyToken, getOrderStatusSummary)
 // ============================ Customer Routes ============================
 clientOrderRouter.route('/customers')
   .post(createCustomer)
@@ -35,5 +38,6 @@ clientOrderRouter.route('/:userId')
 // get all order logs using tracking code
 clientOrderRouter.route("/track-order/:track_order")
   .get(VerifyToken, getOrderByTrackingCode)
+
 
 export default clientOrderRouter;

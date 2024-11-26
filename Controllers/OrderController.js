@@ -238,3 +238,35 @@ export const getOrderByTrackingCode = asyncFunHandler(async (req, res, next) => 
     msg: "order logs are found"
   })
 });
+
+
+/////////////////////////////////////// get total list of all orders /////////////////////////
+
+export const getOrderStatusSummary = asyncFunHandler(async (req, res, next) => {
+  const statusSummary = await Order.aggregate([
+    {
+      $group: {
+        _id: "$order_status",
+        total: { $sum: 1 }
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        order_status: "$_id",
+        total: 1
+      }
+    }
+  ]);
+
+  // Handle case when no orders exist
+  if (!statusSummary || statusSummary.length === 0) {
+    return next(new CustomErrorHandler("No orders found", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    data: statusSummary,
+    msg: "Order status summary fetched successfully"
+  });
+});
