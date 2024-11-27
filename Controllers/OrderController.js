@@ -125,7 +125,6 @@ export const getAllOrders = asyncFunHandler(async (req, res, next) => {
     .populate('userId')
     .populate({
       path: 'assigned_driver',
-      select: 'name', // Populate driver details only if assigned
       match: { _id: { $exists: true } }, // Ensure the driver exists
     })
     .skip(skip)
