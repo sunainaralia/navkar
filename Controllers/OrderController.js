@@ -123,6 +123,11 @@ export const getAllOrders = asyncFunHandler(async (req, res, next) => {
   // Fetch paginated orders
   const orders = await Order.find(filter)
     .populate('userId')
+    .populate({
+      path: 'assigned_driver',
+      select: 'name', // Populate driver details only if assigned
+      match: { _id: { $exists: true } }, // Ensure the driver exists
+    })
     .skip(skip)
     .limit(limit);
 
