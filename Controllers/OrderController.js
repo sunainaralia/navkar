@@ -245,7 +245,7 @@ export const getOrderByTrackingCode = asyncFunHandler(async (req, res, next) => 
 
 
 /////////////////////////////////////// get total list of all orders /////////////////////////
-
+// ..............here errror are exists .........
 export const getOrderStatusSummary = asyncFunHandler(async (req, res, next) => {
   const statusSummary = await Order.aggregate([
     {
@@ -272,5 +272,50 @@ export const getOrderStatusSummary = asyncFunHandler(async (req, res, next) => {
     success: true,
     data: statusSummary,
     msg: "Order status summary fetched successfully"
+  });
+});
+
+/////////////////////////////// get all order according to client id ////////////////////////////////
+export const getAllOrdersByCustomerOfIdAndStatus = asyncFunHandler(async (req, res, next) => {
+  const { customerOfId } = req.params;
+  const { order_status, page = 1, limit = 10 } = req.query;
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+  const filter = {};
+  if (order_status) {
+    filter.order_status = order_status;
+  }
+  const orders = await Order.find(filter)
+    .populate({
+      path: 'userId',
+      match: { customerOf: customerOfId }
+    })
+    .populate({
+      path: 'assigned_driver',
+      select: 'name email phone_no',
+    })
+    .skip(skip)
+    .limit(parseInt(limit));
+  const filteredOrders = orders.filter(order => order.userId !== null);
+  const totalOrders = await Order.countDocuments({
+    ...filter,
+    userId: { $ne: null },
+  });
+
+  // If no orders found
+  if (filteredOrders.length === 0) {
+    return next(new CustomErrorHandler("No orders found for this customerOf ID and order status", 404));
+  }
+
+  // Send the response
+  res.status(200).json({
+    success: true,
+    data: filteredOrders,
+    msg: "Orders fetched successfully",
+    pagination: {
+      totalOrders,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(totalOrders / limit),
+      limit: parseInt(limit),
+    },
   });
 });

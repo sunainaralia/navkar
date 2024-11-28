@@ -10,7 +10,8 @@ import {
   getOrderByUserId,
   updateOrderByCustomerId,
   getOrderByTrackingCode,
-  getOrderStatusSummary
+  getOrderStatusSummary,
+  getAllOrdersByCustomerOfIdAndStatus
 } from "../Controllers/OrderController.js";
 
 const clientOrderRouter = Router();
@@ -39,5 +40,8 @@ clientOrderRouter.route('/:userId')
 clientOrderRouter.route("/track-order/:track_order")
   .get(VerifyToken, getOrderByTrackingCode)
 
+// get all order according to client id 
+clientOrderRouter.route("/order-client/:customerOfId")
+  .get(VerifyToken, getAllOrdersByCustomerOfIdAndStatus)
 
 export default clientOrderRouter;
