@@ -4,7 +4,7 @@ import CustomErrorHandler from "./Utils/CustomErrorHandler.js";
 import ErrorHandling from "./Controllers/ErrorHandling.js";
 import { userRouter } from './Routes/UserRouter.js';
 import { contactRouter } from "./Routes/ContactRouter.js";
-import { CityRouter, ProvinceRouter, ZoneRouter, PostalCodeRouter } from "./Routes/ProvinceRouter.js";
+import { ProvinceRouter } from "./Routes/ProvinceRouter.js";
 import { uploadRouter } from "./Routes/UploadRouter.js";
 import { contactUsRouter } from "./Routes/ContactUsRouter.js";
 import setupSwaggerDocs from "./Middlewares/swaggerConfig.js";
@@ -29,12 +29,6 @@ app.use('/api/v1/user/', userRouter);
 app.use('/api/v1/serviceReq/', contactRouter);
 // Routes for province 
 app.use('/api/v1/province/', ProvinceRouter);
-// Routes for city
-app.use('/api/v1/city/', CityRouter);
-// Routes for zone
-app.use('/api/v1/zone/', ZoneRouter);
-// Routes for postal code 
-app.use('/api/v1/postal/', PostalCodeRouter);
 // Routes for upload image
 app.use('/api/v1/upload/', uploadRouter);
 // routes for contact us

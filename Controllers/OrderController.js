@@ -245,7 +245,6 @@ export const getOrderByTrackingCode = asyncFunHandler(async (req, res, next) => 
 
 
 /////////////////////////////////////// get total list of all orders /////////////////////////
-// ..............here errror are exists .........
 export const getOrderStatusSummary = asyncFunHandler(async (req, res, next) => {
   const statusSummary = await Order.aggregate([
     {
