@@ -24,4 +24,6 @@ const sendEmail = (option) => {
   transporter.sendMail(emailOptions);
 }
 
+
+
 export default sendEmail;

@@ -85,9 +85,22 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
   if (generatedPassword) {
     responseData.generatedPassword = generatedPassword;
   }
+  if (role == "client") {
+    try {
+      const msg = `you are registered as client having password ${userPassword}, please copy your password for login through website by following link\n\n https://navkar-logistics-5y5m.vercel.app/login`
+      sendEmail({
+        msg: msg,
+        email: email,
+        subject: "for send the mail to client"
+      })
+    } catch (err) {
+      const errors = new CustomErrorHandler("some error has occured during sending the email", 500)
+      return next(errors);
+    }
+  }
   return res.status(201).json({
     success: true,
-    msg: `${role} created successfully`,
+    msg: `${role} created successfully and password is sent to the mail of client`,
     data: responseData,
     token
   });
@@ -155,14 +168,14 @@ export const getUserProfile = asyncFunHandler(async (req, res, next) => {
 //////////////// update the client profile //////////////////
 export const editUser = asyncFunHandler(async (req, res) => {
   let role = req.user.role
-  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address,address2 } = req.body;
+  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address, address2 } = req.body;
   const getUserndUpdate = await User.findByIdAndUpdate(req.user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status }, { new: true, runValidators: true });
   // Update role-specific data in the appropriate model
   let roleData;
   if (role === 'client') {
     roleData = await Client.findOneAndUpdate(
       { userId: req.user.id },
-      { businessName, province, city, postalCode, address1 ,address2},
+      { businessName, province, city, postalCode, address1, address2 },
       { new: true, runValidators: true }
     );
   } else if (role === 'driver') {
@@ -445,14 +458,14 @@ export const editUserById = asyncFunHandler(async (req, res) => {
     return next(new CustomErrorHandler("User not found", 404));
   };
   let role = user.role
-  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address ,address2} = req.body;
+  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address, address2 } = req.body;
   const getUserndUpdate = await User.findByIdAndUpdate(user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status }, { new: true, runValidators: true });
   // Update role-specific data in the appropriate model
   let roleData;
   if (role === 'client') {
     roleData = await Client.findOneAndUpdate(
       { userId: user.id },
-      { businessName, province, city, postalCode, address1 ,address2},
+      { businessName, province, city, postalCode, address1, address2 },
       { new: true, runValidators: true }
     );
   } else if (role === 'driver') {

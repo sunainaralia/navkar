@@ -88,7 +88,7 @@ const ClientSchema = new mongoose.Schema(
       required: [true, "Please enter your adress"],
     },
     price: {
-      type: Number
+      type: String
     },
     address2: {
       type: String,

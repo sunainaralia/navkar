@@ -13,7 +13,7 @@ const ProvinceSchema = new mongoose.Schema({
     type: String,
     required: [true, "city_name is required"]
   },
-  postalCode: {
+  postal_code: {
     type: String,
     required: [true, "postalCode is required"]
   },
