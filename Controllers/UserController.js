@@ -33,7 +33,7 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
   let generatedPassword;
   if (!password) {
     // Generate random 8-character password
-    generatedPassword = crypto.randomBytes(4).toString('hex')
+    generatedPassword = crypto.randomBytes(4).toString('hex');
     userPassword = generatedPassword;
     userConfirmPassword = userPassword;
   }
@@ -80,31 +80,38 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
   // Prepare response data
   let responseData = {
     ...newUser.toObject(),
+    personal_id: newUser.personal_id, 
     ...(roleData?.toObject() || {})
   };
+
   if (generatedPassword) {
     responseData.generatedPassword = generatedPassword;
   }
-  if (role == "client") {
+
+  // Send an email to clients with the generated password
+  if (role === "client") {
     try {
-      const msg = `you are registered as client having password ${userPassword}, please copy your password for login through website by following link\n\n https://navkar-logistics-5y5m.vercel.app/login`
+      const msg = `You are registered as a client with password: ${userPassword}. Please copy your password to log in using the following link:\n\nhttps://navkar-logistics-5y5m.vercel.app/login`;
       sendEmail({
         msg: msg,
         email: email,
-        subject: "for send the mail to client"
-      })
+        subject: "Registration Details"
+      });
     } catch (err) {
-      const errors = new CustomErrorHandler("some error has occured during sending the email", 500)
+      const errors = new CustomErrorHandler("An error occurred while sending the email.", 500);
       return next(errors);
     }
   }
+
+  // Send the response
   return res.status(201).json({
     success: true,
-    msg: `${role} created successfully and password is sent to the mail of client`,
+    msg: `${role} created successfully. The password is sent to the client's email.`,
     data: responseData,
     token
   });
 });
+
 
 //////////////////////// login the client/////////////////////
 export const LoginUser = asyncFunHandler(async (req, res, next) => {

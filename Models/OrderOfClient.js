@@ -44,11 +44,13 @@ const OrderSchema = new mongoose.Schema({
     required: true
   },
   address2: String,
-  service_type: String,
+  service_type: {
+    type: [String],
+  },
   msg: String,
   order_status: {
     type: String,
-    default: "requested"
+    default: "unassigned"
   },
   delieverd_to: {
     type: String
@@ -76,6 +78,16 @@ const OrderSchema = new mongoose.Schema({
   reciever_sign: {
     type: String
   },
+  product: [
+    {
+      name: {
+        type: String
+      },
+      quantity: {
+        type: Number
+      }
+    }
+  ],
   status_logs: [
     {
       status: {

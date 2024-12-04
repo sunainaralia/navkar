@@ -59,9 +59,15 @@ export const updateCustomerById = asyncFunHandler(async (req, res, next) => {
 ///////////////////////////////////// create order///////////////////////////////
 export const createOrder = asyncFunHandler(async (req, res, next) => {
   const {
-    userId, address2, service_type, msg,
-    assigned_driver, pickUpDate,
-    DropUpDate, shift
+    userId,
+    address2,
+    service_type,
+    msg,
+    assigned_driver,
+    pickUpDate,
+    DropUpDate,
+    shift,
+    product, // New field
   } = req.body;
 
   // Ensure the customer exists
@@ -70,7 +76,22 @@ export const createOrder = asyncFunHandler(async (req, res, next) => {
     return next(new CustomErrorHandler("Customer not found", 404));
   }
 
-  // Create the order (track_order will be set automatically in the schema)
+  // Validate product field
+  if (!Array.isArray(product) || product.length === 0) {
+    return next(new CustomErrorHandler("Product details are required", 400));
+  }
+
+  // Validate each product item
+  for (const item of product) {
+    if (!item.name || typeof item.name !== "string") {
+      return next(new CustomErrorHandler("Each product must have a valid name", 400));
+    }
+    if (!item.quantity || typeof item.quantity !== "number") {
+      return next(new CustomErrorHandler("Each product must have a valid quantity", 400));
+    }
+  }
+
+  // Create the order
   const order = new Order({
     userId,
     address2,
@@ -80,11 +101,12 @@ export const createOrder = asyncFunHandler(async (req, res, next) => {
     pickUpDate,
     DropUpDate,
     shift,
+    product, // Assign the product array
     status_logs: [
       {
-        status: "requested",
+        status: "unassigned",
         timestamp: new Date(),
-        note: "Order created with initial status as 'requested'",
+        note: "Order created with initial status as 'unassigned'",
       },
     ],
   });
@@ -92,8 +114,10 @@ export const createOrder = asyncFunHandler(async (req, res, next) => {
   // Save the order
   await order.save();
 
-  // Populate the userId field with user details
-  const populatedOrder = await Order.findById(order._id).populate('userId');
+  // Populate the userId and assigned_driver fields with user details
+  const populatedOrder = await Order.findById(order._id)
+    .populate("userId")
+    .populate("assigned_driver");
 
   res.status(201).json({
     success: true,
@@ -101,6 +125,7 @@ export const createOrder = asyncFunHandler(async (req, res, next) => {
     data: populatedOrder,
   });
 });
+
 
 //////////////////////// Controller to get all orders //////////////////////////
 export const getAllOrders = asyncFunHandler(async (req, res, next) => {
@@ -246,11 +271,23 @@ export const getOrderByTrackingCode = asyncFunHandler(async (req, res, next) => 
 
 /////////////////////////////////////// get total list of all orders /////////////////////////
 export const getOrderStatusSummary = asyncFunHandler(async (req, res, next) => {
+  // Get the start and end of the current day
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999); // Set time to 23:59:59
+
+  // Perform aggregation
   const statusSummary = await Order.aggregate([
     {
+      $match: {
+        createdAt: { $gte: startOfDay, $lte: endOfDay } // Filter orders for today
+      }
+    },
+    {
       $group: {
-        _id: "$order_status",
-        total: { $sum: 1 }
+        _id: "$order_status", // Group by order status
+        total: { $sum: 1 } // Count orders per status
       }
     },
     {
@@ -264,13 +301,13 @@ export const getOrderStatusSummary = asyncFunHandler(async (req, res, next) => {
 
   // Handle case when no orders exist
   if (!statusSummary || statusSummary.length === 0) {
-    return next(new CustomErrorHandler("No orders found", 404));
+    return next(new CustomErrorHandler("No orders found for today", 404));
   }
 
   res.status(200).json({
     success: true,
     data: statusSummary,
-    msg: "Order status summary fetched successfully"
+    msg: "Today's order status summary fetched successfully"
   });
 });
 

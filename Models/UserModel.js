@@ -120,13 +120,20 @@ const DriverSchema = mongoose.Schema({
   }
 })
 
-// Middleware to hash the password before saving
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+  // Hash password if modified
+  if (this.isModified('password')) {
+    this.password = await bcryptjs.hash(this.password, 12);
+    this.confirmPassword = undefined;
+  }
 
-  // Hash password and remove confirmPassword after validation
-  this.password = await bcryptjs.hash(this.password, 12);
-  this.confirmPassword = undefined; // Only set to undefined here after hashing
+  // Generate personal_id if not already set
+  if (!this.personal_id) {
+    const randomNum = Math.floor(1000 + Math.random() * 9000); // Generate a random 4-digit number
+    const rolePrefix = this.role === 'client' ? 'cus' : this.role === 'driver' ? 'dri' : 'adm';
+    const namePrefix = this.name.toLowerCase().substring(0, 3); // First three letters of the name
+    this.personal_id = `${rolePrefix}_${namePrefix}${randomNum}`;
+  }
   next();
 });
 
