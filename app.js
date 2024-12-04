@@ -6,7 +6,6 @@ import { userRouter } from './Routes/UserRouter.js';
 import { contactRouter } from "./Routes/ContactRouter.js";
 import { ProvinceRouter } from "./Routes/ProvinceRouter.js";
 import { uploadRouter } from "./Routes/UploadRouter.js";
-import { contactUsRouter } from "./Routes/ContactUsRouter.js";
 import setupSwaggerDocs from "./Middlewares/swaggerConfig.js";
 import clientOrderRouter from "./Routes/OrderRouter.js";
 const app = express();
@@ -31,8 +30,6 @@ app.use('/api/v1/serviceReq/', contactRouter);
 app.use('/api/v1/province/', ProvinceRouter);
 // Routes for upload image
 app.use('/api/v1/upload/', uploadRouter);
-// routes for contact us
-app.use("/api/v1/contactus/", contactUsRouter)
 // Handle undefined routes
 app.use("/api/v1/orders/", clientOrderRouter)
 app.all("*", (req, res, next) => {

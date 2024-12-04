@@ -53,14 +53,13 @@ export const createProvince = asyncFunHandler(async (req, res, next) => {
 
   // Validate each object in the province array
   const provincesData = province.map((item) => {
-    if (!item.name || !item.city || !item.zone || !item.service_charge || !item.postal_code) {
+    if (!item.name || !item.city || !item.zone || !item.postal_code) {
       next (new CustomErrorHandler("Each province object must include name, city, zone, service_charge, and postal_code."))
     }
     return {
       province: item.name,
       city: item.city,
       zone: item.zone,
-      service_charge: item.service_charge,
       postal_code: item.postal_code,
     };
   });

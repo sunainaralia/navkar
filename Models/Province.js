@@ -21,11 +21,7 @@ const ProvinceSchema = new mongoose.Schema({
     type: String,
     required: [true, "zone_name is required"],
     unique:true
-  },
-  service_charge: {
-    type: String,
-    required: [true, "service charge is required"]
-  },
+  }
 }, { timestamps: true });
 
 export const Province = mongoose.model('Province', ProvinceSchema);
