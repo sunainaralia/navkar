@@ -80,7 +80,7 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
   // Prepare response data
   let responseData = {
     ...newUser.toObject(),
-    personal_id: newUser.personal_id, 
+    personal_id: newUser.personal_id,
     ...(roleData?.toObject() || {})
   };
 
@@ -143,23 +143,19 @@ export const LoginUser = asyncFunHandler(async (req, res, next) => {
 
   // Find the user by email
   const user = await User.findOne({ email });
-  console.log(user)
-
   if (!user || !(await user.comparePasswordInDb(password, user.password))) {
     return next(new CustomErrorHandler("Email or password is not correct", 400));
   }
 
   // Fetch role-specific data
   let roleData = {};
-  if (user.role === 'client') {
-    roleData = await Client.findOne({ userId: user._id }).lean();
-  } else if (user.role === 'driver') {
+  if (user.role === 'driver') {
     roleData = await Driver.findOne({ userId: user._id }).lean();
   }
 
   // Combine user data with role-specific data
   const combinedData = {
-    ...user.toObject(), // Includes all fields, including personal_id
+    ...user.toObject(), 
     ...(roleData || {})
   };
 
