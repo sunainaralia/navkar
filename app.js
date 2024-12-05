@@ -5,7 +5,7 @@ import ErrorHandling from "./Controllers/ErrorHandling.js";
 import { userRouter } from './Routes/UserRouter.js';
 import { contactRouter } from "./Routes/ContactRouter.js";
 import { ProvinceRouter } from "./Routes/ProvinceRouter.js";
-import { uploadRouter } from "./Routes/UploadRouter.js";
+import { uploadRouter } from "./Routes/uploadRouter.js";
 import setupSwaggerDocs from "./Middlewares/swaggerConfig.js";
 import clientOrderRouter from "./Routes/OrderRouter.js";
 const app = express();

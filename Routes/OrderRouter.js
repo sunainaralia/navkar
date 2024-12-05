@@ -11,10 +11,14 @@ import {
   updateOrderByCustomerId,
   getOrderByTrackingCode,
   getOrderStatusSummary,
-  getAllOrdersByCustomerOfIdAndStatus
+  getAllOrdersByCustomerOfIdAndStatus,
+  getOrderStatusSummaryForDriver
 } from "../Controllers/OrderController.js";
 
 const clientOrderRouter = Router();
+// get total no of order status acc.to the driver id 
+clientOrderRouter.route("/sum-order-driver/")
+  .get(VerifyToken, getOrderStatusSummaryForDriver)
 // get total no  of all order status
 clientOrderRouter.route("/sum-order")
   .get(VerifyToken, getOrderStatusSummary)

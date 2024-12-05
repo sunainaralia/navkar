@@ -53,6 +53,10 @@ const userSchema = new mongoose.Schema({
   },
   resetToken: String,
   resetTokenExpiresIn: Date,
+  personal_id: {
+    type: String,
+    unique: true
+  }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });

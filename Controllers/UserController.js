@@ -114,26 +114,69 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
 
 
 //////////////////////// login the client/////////////////////
+// export const LoginUser = asyncFunHandler(async (req, res, next) => {
+//   const email = req.body.email;
+//   const password = req.body.password;
+//   if (!email || !password) {
+//     let err = new CustomErrorHandler("email or password is not provided", 400)
+//     return next(err);
+//   }
+//   const user = await User.findOne({ email })
+//   if (!user || !(await user.comparePasswordInDb(password, user.password))) {
+//     let err = new CustomErrorHandler("email or password is not correct", 400)
+//     return next(err);
+//   }
+//   let token = genrateToken(user._id)
+//   res.status(200).json({
+//     success: true,
+//     msg: "user is login successfully",
+//     data: user,
+//     token
+//   })
+// })
 export const LoginUser = asyncFunHandler(async (req, res, next) => {
-  const email = req.body.email;
-  const password = req.body.password;
+  const { email, password } = req.body;
+
   if (!email || !password) {
-    let err = new CustomErrorHandler("email or password is not provided", 400)
-    return next(err);
+    return next(new CustomErrorHandler("Email or password is not provided", 400));
   }
-  const user = await User.findOne({ email })
+
+  // Find the user by email
+  const user = await User.findOne({ email });
+  console.log(user)
+
   if (!user || !(await user.comparePasswordInDb(password, user.password))) {
-    let err = new CustomErrorHandler("email or password is not correct", 400)
-    return next(err);
+    return next(new CustomErrorHandler("Email or password is not correct", 400));
   }
-  let token = genrateToken(user._id)
+
+  // Fetch role-specific data
+  let roleData = {};
+  if (user.role === 'client') {
+    roleData = await Client.findOne({ userId: user._id }).lean();
+  } else if (user.role === 'driver') {
+    roleData = await Driver.findOne({ userId: user._id }).lean();
+  }
+
+  // Combine user data with role-specific data
+  const combinedData = {
+    ...user.toObject(), // Includes all fields, including personal_id
+    ...(roleData || {})
+  };
+
+  // Generate token
+  const token = genrateToken(user._id);
+
+  // Send response
   res.status(200).json({
     success: true,
-    msg: "user is login successfully",
-    data: user,
+    msg: "User logged in successfully",
+    data: combinedData,
     token
-  })
-})
+  });
+});
+
+
+
 
 ////////////////////////// get client profile //////////////////
 export const getUserProfile = asyncFunHandler(async (req, res, next) => {

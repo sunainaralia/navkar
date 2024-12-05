@@ -2,6 +2,7 @@ import { Customer } from '../Models/OrderOfClient.js';
 import Order from '../Models/OrderOfClient.js';
 import asyncFunHandler from '../Utils/asyncFunHandler.js';
 import CustomErrorHandler from '../Utils/CustomErrorHandler.js';
+import mongoose from 'mongoose';
 // Create a new Customer
 export const createCustomer = asyncFunHandler(async (req, res, next) => {
   const customer = await Customer.create(req.body);
@@ -353,5 +354,56 @@ export const getAllOrdersByCustomerOfIdAndStatus = asyncFunHandler(async (req, r
       totalPages: Math.ceil(totalOrders / limit),
       limit: parseInt(limit),
     },
+  });
+});
+
+
+// get order status summary of particular driver only 
+export const getOrderStatusSummaryForDriver = asyncFunHandler(async (req, res, next) => {
+  // Extract driver ID from token
+  const driverId = req.user.id; // Assuming the driver ID is available in `req.user` after token verification
+
+  if (!driverId) {
+    return next(new CustomErrorHandler("Driver ID not found in token", 401));
+  }
+
+  // Get the start and end of the current day
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999); // Set time to 23:59:59
+
+  // Perform aggregation
+  const statusSummary = await Order.aggregate([
+    {
+      $match: {
+        assigned_driver:new mongoose.Types.ObjectId(driverId), // Filter by driver ID
+        createdAt: { $gte: startOfDay, $lte: endOfDay } // Filter orders for today
+      }
+    },
+    {
+      $group: {
+        _id: "$order_status", // Group by order status
+        total: { $sum: 1 } // Count orders per status
+      }
+    },
+    {
+      $project: {
+        _id: 0,
+        order_status: "$_id",
+        total: 1
+      }
+    }
+  ]);
+
+  // Handle case when no orders exist
+  if (!statusSummary || statusSummary.length === 0) {
+    return next(new CustomErrorHandler("No orders found for the driver today", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    data: statusSummary,
+    msg: "Today's order status summary for the driver fetched successfully"
   });
 });
