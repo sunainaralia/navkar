@@ -133,14 +133,10 @@ export const getAllOrders = asyncFunHandler(async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const { order_status } = req.query;
-
-  // Calculate the skip value
   const skip = (page - 1) * limit;
-
-  // Build the filter condition
   const filter = {};
   if (order_status) {
-    filter.order_status = order_status; // Apply the status filter only if provided
+    filter.order_status = order_status;
   }
 
   // Get total count of orders matching the filter for pagination metadata
@@ -168,7 +164,6 @@ export const getAllOrders = asyncFunHandler(async (req, res, next) => {
     },
   });
 });
-
 
 
 //////////////////////////////  Controller to get an order by userId ///////////////////////
@@ -367,6 +362,9 @@ export const getOrderStatusSummaryForDriver = asyncFunHandler(async (req, res, n
     return next(new CustomErrorHandler("Driver ID not found in token", 401));
   }
 
+  // Define allowed order statuses
+  const allowedStatuses = ["assigned", "unassigned", "pickup", "intransit", "delivered", "unfulfilled"];
+
   // Get the start and end of the current day
   const startOfDay = new Date();
   startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
@@ -377,7 +375,7 @@ export const getOrderStatusSummaryForDriver = asyncFunHandler(async (req, res, n
   const statusSummary = await Order.aggregate([
     {
       $match: {
-        assigned_driver:new mongoose.Types.ObjectId(driverId), // Filter by driver ID
+        assigned_driver: new mongoose.Types.ObjectId(driverId), // Filter by driver ID
         createdAt: { $gte: startOfDay, $lte: endOfDay } // Filter orders for today
       }
     },
@@ -396,14 +394,15 @@ export const getOrderStatusSummaryForDriver = asyncFunHandler(async (req, res, n
     }
   ]);
 
-  // Handle case when no orders exist
-  if (!statusSummary || statusSummary.length === 0) {
-    return next(new CustomErrorHandler("No orders found for the driver today", 404));
-  }
-
-  res.status(200).json({
-    success: true,
-    data: statusSummary,
-    msg: "Today's order status summary for the driver fetched successfully"
+  // Build the complete response with zero counts for missing statuses
+  const fullStatusSummary = allowedStatuses.map((status) => {
+    const statusData = statusSummary.find((item) => item.order_status === status);
+    return {
+      order_status: status,
+      total: statusData ? statusData.total : 0 // Default to 0 if the status is not found
+    };
   });
+
+  // Send response
+  res.status(200).json(fullStatusSummary);
 });

@@ -112,28 +112,6 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
   });
 });
 
-
-//////////////////////// login the client/////////////////////
-// export const LoginUser = asyncFunHandler(async (req, res, next) => {
-//   const email = req.body.email;
-//   const password = req.body.password;
-//   if (!email || !password) {
-//     let err = new CustomErrorHandler("email or password is not provided", 400)
-//     return next(err);
-//   }
-//   const user = await User.findOne({ email })
-//   if (!user || !(await user.comparePasswordInDb(password, user.password))) {
-//     let err = new CustomErrorHandler("email or password is not correct", 400)
-//     return next(err);
-//   }
-//   let token = genrateToken(user._id)
-//   res.status(200).json({
-//     success: true,
-//     msg: "user is login successfully",
-//     data: user,
-//     token
-//   })
-// })
 export const LoginUser = asyncFunHandler(async (req, res, next) => {
   const { email, password } = req.body;
 
@@ -143,6 +121,9 @@ export const LoginUser = asyncFunHandler(async (req, res, next) => {
 
   // Find the user by email
   const user = await User.findOne({ email });
+  if (user.role !== "client" || user.role !== "driver") {
+    return next(new CustomErrorHandler("you have no authority to login", 400));
+  }
   if (!user || !(await user.comparePasswordInDb(password, user.password))) {
     return next(new CustomErrorHandler("Email or password is not correct", 400));
   }
@@ -155,7 +136,7 @@ export const LoginUser = asyncFunHandler(async (req, res, next) => {
 
   // Combine user data with role-specific data
   const combinedData = {
-    ...user.toObject(), 
+    ...user.toObject(),
     ...(roleData || {})
   };
 
@@ -170,7 +151,38 @@ export const LoginUser = asyncFunHandler(async (req, res, next) => {
     token
   });
 });
+export const LoginAdmin = asyncFunHandler(async (req, res, next) => {
+  const { email, password } = req.body;
 
+  if (!email || !password) {
+    return next(new CustomErrorHandler("Email or password is not provided", 400));
+  }
+
+  // Find the user by email
+  const user = await User.findOne({ email });
+  if (user.role === "client" || user.role === "driver") {
+    return next(new CustomErrorHandler("you have no authority to login", 400));
+  }
+  if (!user || !(await user.comparePasswordInDb(password, user.password))) {
+    return next(new CustomErrorHandler("Email or password is not correct", 400));
+  }
+
+  // Combine user data with role-specific data
+  const combinedData = {
+    ...user.toObject()
+  };
+
+  // Generate token
+  const token = genrateToken(user._id);
+
+  // Send response
+  res.status(200).json({
+    success: true,
+    msg: "User logged in successfully",
+    data: combinedData,
+    token
+  });
+});
 
 
 

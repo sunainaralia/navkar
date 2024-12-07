@@ -35,7 +35,7 @@ const CounterSchema = new mongoose.Schema({
 });
 
 const Counter = mongoose.model('Counter', CounterSchema)
-
+const allowedStatuses = ["assigned", "unassigned", "pickup", "intransit", "delivered", "unfulfilled"];
 // order of customer 
 const OrderSchema = new mongoose.Schema({
   userId: {
@@ -50,6 +50,7 @@ const OrderSchema = new mongoose.Schema({
   msg: String,
   order_status: {
     type: String,
+    enum: allowedStatuses,
     default: "unassigned"
   },
   delieverd_to: {
