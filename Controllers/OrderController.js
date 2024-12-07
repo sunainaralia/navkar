@@ -1,4 +1,5 @@
 import { Customer } from '../Models/OrderOfClient.js';
+import User from '../Models/UserModel.js';
 import Order from '../Models/OrderOfClient.js';
 import asyncFunHandler from '../Utils/asyncFunHandler.js';
 import CustomErrorHandler from '../Utils/CustomErrorHandler.js';
@@ -362,6 +363,12 @@ export const getOrderStatusSummaryForDriver = asyncFunHandler(async (req, res, n
     return next(new CustomErrorHandler("Driver ID not found in token", 401));
   }
 
+  // Fetch the driver's name from the User model
+  const driver = await User.findById(driverId).select("name");
+  if (!driver) {
+    return next(new CustomErrorHandler("Driver not found", 404));
+  }
+
   // Define allowed order statuses
   const allowedStatuses = ["assigned", "unassigned", "pickup", "intransit", "delivered", "unfulfilled"];
 
@@ -403,6 +410,10 @@ export const getOrderStatusSummaryForDriver = asyncFunHandler(async (req, res, n
     };
   });
 
-  // Send response
-  res.status(200).json(fullStatusSummary);
+  // Include driver's name in the response
+  res.status(200).json({
+    driver_name: driver.name,
+    status_summary: fullStatusSummary
+  });
 });
+
