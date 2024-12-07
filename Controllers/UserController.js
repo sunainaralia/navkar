@@ -121,9 +121,10 @@ export const LoginUser = asyncFunHandler(async (req, res, next) => {
 
   // Find the user by email
   const user = await User.findOne({ email });
-  if (user.role !== "client" || user.role !== "driver") {
+  if (user.role !== "client" && user.role !== "driver") {
     return next(new CustomErrorHandler("you have no authority to login", 400));
   }
+
   if (!user || !(await user.comparePasswordInDb(password, user.password))) {
     return next(new CustomErrorHandler("Email or password is not correct", 400));
   }
