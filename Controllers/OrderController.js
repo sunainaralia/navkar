@@ -59,74 +59,6 @@ export const updateCustomerById = asyncFunHandler(async (req, res, next) => {
 });
 
 ///////////////////////////////////// create order///////////////////////////////
-// export const createOrder = asyncFunHandler(async (req, res, next) => {
-//   const {
-//     userId,
-//     address2,
-//     service_type,
-//     msg,
-//     assigned_driver,
-//     pickUpDate,
-//     DropUpDate,
-//     shift,
-//     product, // New field
-//   } = req.body;
-
-//   // Ensure the customer exists
-//   const customer = await Customer.findById(userId);
-//   if (!customer) {
-//     return next(new CustomErrorHandler("Customer not found", 404));
-//   }
-
-//   // Validate product field
-//   if (!Array.isArray(product) || product.length === 0) {
-//     return next(new CustomErrorHandler("Product details are required", 400));
-//   }
-
-//   // Validate each product item
-//   for (const item of product) {
-//     if (!item.name || typeof item.name !== "string") {
-//       return next(new CustomErrorHandler("Each product must have a valid name", 400));
-//     }
-//     if (!item.quantity || typeof item.quantity !== "number") {
-//       return next(new CustomErrorHandler("Each product must have a valid quantity", 400));
-//     }
-//   }
-
-//   // Create the order
-//   const order = new Order({
-//     userId,
-//     address2,
-//     service_type,
-//     msg,
-//     assigned_driver,
-//     pickUpDate,
-//     DropUpDate,
-//     shift,
-//     product, // Assign the product array
-//     status_logs: [
-//       {
-//         status: "unassigned",
-//         timestamp: new Date(),
-//         note: "Order created with initial status as 'unassigned'",
-//       },
-//     ],
-//   });
-
-//   // Save the order
-//   await order.save();
-
-//   // Populate the userId and assigned_driver fields with user details
-//   const populatedOrder = await Order.findById(order._id)
-//     .populate("userId")
-//     .populate("assigned_driver");
-
-//   res.status(201).json({
-//     success: true,
-//     msg: "Order created successfully",
-//     data: populatedOrder,
-//   });
-// });
 export const createOrder = async (req, res, next) => {
   try {
     const { userId, address2, service_type, msg, product, pickUpDate, DropUpDate, shift } = req.body;
@@ -416,7 +348,7 @@ export const getOrderStatusSummary = asyncFunHandler(async (req, res, next) => {
   });
 });
 
-/////////////////////////////// get all order according to client id ////////////////////////////////
+/////////////////////////////// get all order according to client id///////////////////////
 export const getAllOrdersByCustomerOfIdAndStatus = asyncFunHandler(async (req, res, next) => {
   const { customerOfId } = req.params;
   const { order_status, page = 1, limit = 10 } = req.query;
@@ -527,8 +459,8 @@ export const getOrderStatusSummaryForDriver = asyncFunHandler(async (req, res, n
 
 
 export const getOrdersByStatusForDriver = asyncFunHandler(async (req, res, next) => {
-  const driverId = req.user.id; // Assuming driver ID is in req.user after token verification
-  const { order_status } = req.query; // Get the order_status from query parameters
+  const driverId = req.user.id;
+  const { order_status } = req.query;
 
   if (!driverId) {
     return next(new CustomErrorHandler("Driver ID not found in token", 401));
@@ -538,24 +470,29 @@ export const getOrdersByStatusForDriver = asyncFunHandler(async (req, res, next)
     return next(new CustomErrorHandler("Order status parameter is required", 400));
   }
 
-  // Define allowed order statuses
   const allowedStatuses = ["assigned", "unassigned", "pickup", "intransit", "delivered", "unfulfilled"];
-
   if (!allowedStatuses.includes(order_status)) {
     return next(new CustomErrorHandler("Invalid order status", 400));
   }
 
-  // Get the start and end of the current day
   const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0); // Set to 00:00:00
+  startOfDay.setHours(0, 0, 0, 0);
   const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999); // Set to 23:59:59
+  endOfDay.setHours(23, 59, 59, 999);
 
   // Fetch orders for the driver with logs for today
   const orders = await Order.find({
     assigned_driver: driverId,
     "logs.date": { $gte: startOfDay, $lte: endOfDay },
-  });
+  })
+    .populate({
+      path: "userId",
+      select: "-password", // Exclude password for security
+    })
+    .populate({
+      path: "assigned_driver",
+      select: "-password", // Exclude password for security
+    });
 
   // Filter orders based on the latest status log for today
   const filteredOrders = orders.filter((order) => {
@@ -571,9 +508,22 @@ export const getOrdersByStatusForDriver = asyncFunHandler(async (req, res, next)
     return false;
   });
 
+  // Format the response and remove logs
+  const response = filteredOrders.map((order) => {
+    const orderObject = order.toObject();
+    delete orderObject.logs; // Remove the logs field
+    return {
+      ...orderObject,
+      userId: order.userId,
+      assigned_driver: order.assigned_driver,
+    };
+  });
+
   res.status(200).json({
     order_status: order_status,
-    total_orders: filteredOrders.length,
-    orders: filteredOrders,
+    total_orders: response.length,
+    orders: response,
   });
 });
+
+
