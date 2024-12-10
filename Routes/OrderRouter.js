@@ -8,17 +8,20 @@ import {
   createOrder,
   getAllOrders,
   getOrderByUserId,
-  updateOrderByCustomerId,
+  updateOrder,
   getOrderByTrackingCode,
   getOrderStatusSummary,
   getAllOrdersByCustomerOfIdAndStatus,
-  getOrderStatusSummaryForDriver
+  getOrderStatusSummaryForDriver,
+  getOrdersByStatusForDriver
 } from "../Controllers/OrderController.js";
 
 const clientOrderRouter = Router();
 // get total no of order status acc.to the driver id 
 clientOrderRouter.route("/sum-order-driver/")
   .get(VerifyToken, getOrderStatusSummaryForDriver)
+clientOrderRouter.route("/driver-order/")
+  .get(VerifyToken, getOrdersByStatusForDriver)
 // get total no  of all order status
 clientOrderRouter.route("/sum-order")
   .get(VerifyToken, getOrderStatusSummary)
@@ -38,7 +41,7 @@ clientOrderRouter.route('/')
 // Get a specific order by userId
 clientOrderRouter.route('/:userId')
   .get(VerifyToken, getOrderByUserId)
-  .patch(VerifyToken, updateOrderByCustomerId)
+  .patch(VerifyToken, updateOrder)
 
 // get all order logs using tracking code
 clientOrderRouter.route("/track-order/:track_order")

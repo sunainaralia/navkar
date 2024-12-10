@@ -37,103 +37,180 @@ const CounterSchema = new mongoose.Schema({
 const Counter = mongoose.model('Counter', CounterSchema)
 const allowedStatuses = ["assigned", "unassigned", "pickup", "intransit", "delivered", "unfulfilled"];
 // order of customer 
+// const OrderSchema = new mongoose.Schema({
+//   userId: {
+//     type: mongoose.Schema.Types.ObjectId,
+//     ref: 'Customer',
+//     required: true
+//   },
+//   address2: String,
+//   service_type: {
+//     type: [String],
+//   },
+//   msg: String,
+//   order_status: {
+//     type: String,
+//     enum: allowedStatuses,
+//     default: "unassigned"
+//   },
+//   delieverd_to: {
+//     type: String
+//   },
+//   track_order: {
+//     type: String,
+//   },
+//   assigned_driver: {
+//     type: mongoose.Schema.Types.ObjectId,
+//     ref: "User"
+//   },
+//   isDriverUpdated: {
+//     type: Boolean,
+//     default: false
+//   },
+//   pickUpDate: {
+//     type: Date
+//   },
+//   DropUpDate: {
+//     type: Date
+//   },
+//   shift: {
+//     type: String
+//   },
+//   reciever_sign: {
+//     type: String
+//   },
+//   product: [
+//     {
+//       name: {
+//         type: String
+//       },
+//       quantity: {
+//         type: Number
+//       }
+//     }
+//   ],
+//   status_logs: [
+//     {
+//       status: {
+//         type: String,
+//         required: true
+//       },
+//       timestamp: {
+//         type: Date,
+//         default: Date.now
+//       },
+//       note: {
+//         type: String,
+//         default: ''
+//       }
+//     }
+//   ],
+//   driver_logs: [
+//     {
+//       driverId: {
+//         type: mongoose.Schema.Types.ObjectId,
+//         ref: "User"
+//       },
+//       assigned_date: {
+//         type: Date,
+//         default: Date.now
+//       },
+//       note: String
+//     }
+//   ],
+//   reason: {
+//     type: String
+//   }
+// }, { timestamps: true });
+// OrderSchema.pre('save', async function (next) {
+//   if (!this.track_order) {
+//     const counter = await Counter.findOneAndUpdate(
+//       { name: 'order_track' },
+//       { $inc: { count: 1 } },
+//       { new: true, upsert: true }
+//     );
+//     const paddedNumber = counter.count.toString().padStart(Math.max(4, counter.count.toString().length), '0');
+//     this.track_order = `NL${paddedNumber}`;
+//   }
+//   next();
+// });
+// const Order = mongoose.model('Order', OrderSchema);
+// export default Order;
+
 const OrderSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Customer',
-    required: true
+    ref: "Customer",
+    required: true,
   },
   address2: String,
-  service_type: {
-    type: [String],
-  },
+  service_type: [String],
   msg: String,
   order_status: {
     type: String,
     enum: allowedStatuses,
-    default: "unassigned"
+    default: "unassigned",
   },
-  delieverd_to: {
-    type: String
-  },
-  track_order: {
-    type: String,
-  },
+  delivered_to: String,
+  track_order: String,
   assigned_driver: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User"
+    ref: "User",
   },
   isDriverUpdated: {
     type: Boolean,
-    default: false
+    default: false,
   },
-  pickUpDate: {
-    type: Date
-  },
-  DropUpDate: {
-    type: Date
-  },
-  shift: {
-    type: String
-  },
-  reciever_sign: {
-    type: String
-  },
+  pickUpDate: Date,
+  DropUpDate: Date,
+  shift: String,
+  receiver_sign: String,
   product: [
     {
-      name: {
-        type: String
-      },
-      quantity: {
-        type: Number
-      }
-    }
+      name: String,
+      quantity: Number,
+    },
   ],
-  status_logs: [
+  logs: [
     {
-      status: {
-        type: String,
-        required: true
-      },
-      timestamp: {
+      date: {
         type: Date,
-        default: Date.now
+        default: Date.now,
       },
-      note: {
+      order_status: {
         type: String,
-        default: ''
-      }
-    }
-  ],
-  driver_logs: [
-    {
-      driverId: {
+        default: null,
+      },
+      assigned_driver: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+        ref: "User",
+        default: null,
       },
-      assigned_date: {
-        type: Date,
-        default: Date.now
+      message: {
+        type: String,
+        required: true,
       },
-      note: String
-    }
+      reason: {
+        type: String,
+        default: "No specific reason provided.",
+      },
+    },
   ],
-  reason: {
-    type: String
-  }
 }, { timestamps: true });
-OrderSchema.pre('save', async function (next) {
+
+// Pre-save hook for generating `track_order`
+OrderSchema.pre("save", async function (next) {
   if (!this.track_order) {
     const counter = await Counter.findOneAndUpdate(
-      { name: 'order_track' },
+      { name: "order_track" },
       { $inc: { count: 1 } },
       { new: true, upsert: true }
     );
-    const paddedNumber = counter.count.toString().padStart(Math.max(4, counter.count.toString().length), '0');
+    const paddedNumber = counter.count.toString().padStart(4, "0");
     this.track_order = `NL${paddedNumber}`;
   }
   next();
 });
-const Order = mongoose.model('Order', OrderSchema);
-export default Order;
 
+const Order = mongoose.model("Order", OrderSchema);
+export default Order;
