@@ -394,9 +394,9 @@ export const getAllOrdersByCustomerOfIdAndStatus = asyncFunHandler(async (req, r
 });
 
 
-// get order status summary of particular driver only 
+////////// get order status summary of particular driver only //////////////
 export const getOrderStatusSummaryForDriver = asyncFunHandler(async (req, res, next) => {
-  const driverId = req.user.id; 
+  const driverId = req.user.id;
 
   if (!driverId) {
     return next(new CustomErrorHandler("Driver ID not found in token", 401));
@@ -456,8 +456,7 @@ export const getOrderStatusSummaryForDriver = asyncFunHandler(async (req, res, n
   });
 });
 
-
-
+////// get order status summary of particular driver with order status /////////
 export const getOrdersByStatusForDriver = asyncFunHandler(async (req, res, next) => {
   const driverId = req.user.id;
   const { order_status } = req.query;
