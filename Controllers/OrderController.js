@@ -150,69 +150,7 @@ export const getOrderByUserId = asyncFunHandler(async (req, res, next) => {
 });
 
 
-///////////////////////////////// Controller to update an order by ID //////////////////////////////
-// export const updateOrderByCustomerId = asyncFunHandler(async (req, res, next) => {
-//   const { userId } = req.params;
-//   const { order_status, assigned_driver, reason, ...updateData } = req.body;
-
-//   // Find the order for the given customer
-//   const order = await Order.findById(userId);
-//   if (!order) {
-//     return next(new CustomErrorHandler("Order not found", 404));
-//   }
-
-//   // Handle order status updates
-//   if (order_status && order_status !== order.order_status) {
-//     order.order_status = order_status;
-//     order.status_logs.push({
-//       status: order_status,
-//       timestamp: new Date(),
-//       note: `Order status updated to '${order_status}'`,
-//     });
-//   }
-
-//   // Handle driver assignments
-//   if (assigned_driver) {
-//     const isDriverAssigned =
-//       order.assigned_driver && order.assigned_driver.toString() === assigned_driver;
-
-//     if (!isDriverAssigned) {
-//       // Update assigned driver
-//       order.assigned_driver = assigned_driver;
-
-//       // Log the new driver assignment
-//       order.driver_logs.push({
-//         driverId: assigned_driver,
-//         assigned_date: new Date(),
-//         note: `Driver assigned to the order`,
-//         reason: reason || "No reason provided",
-//       });
-
-//       // Mark the driver as updated
-//       order.isDriverUpdated = true;
-//     } else if (reason) {
-//       // Log reassignment with the reason
-//       order.driver_logs.push({
-//         driverId: assigned_driver,
-//         assigned_date: new Date(),
-//         note: `Driver reassigned to the order`,
-//         reason: reason,
-//       });
-//     }
-//   }
-
-//   // Update other order details (address2, service_type, msg, etc.)
-//   Object.assign(order, updateData);
-
-//   // Save the updated order
-//   await order.save();
-//   const populatedOrder = await Order.findById(order._id).populate('userId');
-//   res.status(200).json({
-//     success: true,
-//     msg: "Order updated successfully with logs",
-//     data: populatedOrder,
-//   });
-// });
+///////////////////////////////// Controller to update an order by ID///////////
 export const updateOrder = async (req, res, next) => {
   try {
     const { userId } = req.params; // Order ID
@@ -288,7 +226,6 @@ export const updateOrder = async (req, res, next) => {
     next(error);
   }
 };
-
 
 
 // get order by tracking order id 
@@ -396,7 +333,7 @@ export const getAllOrdersByCustomerOfIdAndStatus = asyncFunHandler(async (req, r
 
 ////////// get order status summary of particular driver only //////////////
 export const getOrderStatusSummaryForDriver = asyncFunHandler(async (req, res, next) => {
-  const driverId = req.user.id;
+  const driverId = req.user.id; 
 
   if (!driverId) {
     return next(new CustomErrorHandler("Driver ID not found in token", 401));
@@ -526,3 +463,16 @@ export const getOrdersByStatusForDriver = asyncFunHandler(async (req, res, next)
 });
 
 
+//////////////////////// API to get order by order_token ////////////////////////////
+export const getOrderByOrderToken = asyncFunHandler(async (req, res, next) => {
+  const { order_token } = req.params;
+  const order = await Order.findOne({ order_token }).populate("userId").populate("assigned_driver").select("-logs");;
+  if (!order) {
+    return next(new CustomErrorHandler("Order not found", 404));
+  }
+  res.status(200).json({
+    success: true,
+    data: order,
+    message: "Order retrieved successfully",
+  });
+});

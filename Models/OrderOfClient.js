@@ -4,7 +4,7 @@ import User from "./UserModel.js";
 // Customer schema
 const CustomerSchema = new mongoose.Schema({
   fullName: { type: String, required: true },
-  businessName: { type: String, default: null }, // Set to null if not provided
+  businessName: { type: String, default: null },
   email: { type: String, required: true, unique: true },
   mobileNumber: {
     type: String,
@@ -16,7 +16,7 @@ const CustomerSchema = new mongoose.Schema({
       message: "Please enter a valid 10-digit phone number",
     },
   },
-  province: { type: String, default: null }, // Set to null if not provided
+  province: { type: String, default: null },
   city: { type: String, default: null },
   postalCode: { type: Number, default: null },
   address1: { type: String, default: null },
@@ -30,8 +30,8 @@ export const Customer = mongoose.model("Customer", CustomerSchema);
 
 // Counter schema to count track orders
 const CounterSchema = new mongoose.Schema({
-  name: { type: String, required: true }, // Identifier for the counter (e.g., 'order_track')
-  count: { type: Number, default: 0 }, // The current count value
+  name: { type: String, required: true },
+  count: { type: Number, default: 0 },
 });
 
 const Counter = mongoose.model("Counter", CounterSchema);
@@ -53,7 +53,7 @@ const OrderSchema = new mongoose.Schema(
       required: true,
     },
     address2: { type: String, default: null },
-    service_type: { type: [String], default: [] }, // Defaults to an empty array
+    service_type: { type: [String], default: [] },
     msg: { type: String, default: null },
     order_status: {
       type: String,
@@ -106,12 +106,14 @@ const OrderSchema = new mongoose.Schema(
         },
       },
     ],
+    order_token: { type: String, default: null }, 
   },
   { timestamps: true }
 );
 
-// Pre-save hook for generating `track_order`
+// Pre-save hook for generating `track_order` and `order_token`
 OrderSchema.pre("save", async function (next) {
+  // Generate tracking code
   if (!this.track_order) {
     const counter = await Counter.findOneAndUpdate(
       { name: "order_track" },
@@ -121,6 +123,12 @@ OrderSchema.pre("save", async function (next) {
     const paddedNumber = counter.count.toString().padStart(4, "0");
     this.track_order = `NL${paddedNumber}`;
   }
+
+  // Generate order token
+  if (!this.order_token) {
+    this.order_token = `${this._id}_${Date.now()}`; 
+  }
+
   next();
 });
 
