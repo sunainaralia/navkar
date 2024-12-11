@@ -20,6 +20,7 @@ const CustomerSchema = new mongoose.Schema({
   city: { type: String, default: null },
   postalCode: { type: Number, default: null },
   address1: { type: String, default: null },
+  address2: { type: String, default: null },
   customerOf: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -47,12 +48,11 @@ const allowedStatuses = [
 // Order schema
 const OrderSchema = new mongoose.Schema(
   {
-    userId: {
+    customerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
       required: true,
     },
-    address2: { type: String, default: null },
     service_type: { type: [String], default: [] },
     msg: { type: String, default: null },
     order_status: {
@@ -67,14 +67,10 @@ const OrderSchema = new mongoose.Schema(
       ref: "User",
       default: null,
     },
-    isDriverUpdated: {
-      type: Boolean,
-      default: false,
-    },
     pickUpDate: { type: Date, default: null },
     DropUpDate: { type: Date, default: null },
     shift: { type: String, default: null },
-    receiver_sign: { type: String, default: null },
+    deliever_sign: { type: String, default: null },
     product: [
       {
         name: { type: String, default: null },
@@ -106,7 +102,7 @@ const OrderSchema = new mongoose.Schema(
         },
       },
     ],
-    order_token: { type: String, default: null }, 
+    order_token: { type: String, default: null },
   },
   { timestamps: true }
 );
@@ -126,7 +122,7 @@ OrderSchema.pre("save", async function (next) {
 
   // Generate order token
   if (!this.order_token) {
-    this.order_token = `${this._id}_${Date.now()}`; 
+    this.order_token = `${this._id}_${Date.now()}`;
   }
 
   next();

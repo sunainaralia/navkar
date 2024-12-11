@@ -61,11 +61,19 @@ export const updateCustomerById = asyncFunHandler(async (req, res, next) => {
 ///////////////////////////////////// create order///////////////////////////////
 export const createOrder = async (req, res, next) => {
   try {
-    const { userId, address2, service_type, msg, product, pickUpDate, DropUpDate, shift } = req.body;
+    const {
+      customerId,
+      service_type,
+      msg,
+      product,
+      pickUpDate,
+      DropUpDate,
+      shift,
+    } = req.body;
 
+    // Create a new order
     const newOrder = new Order({
-      userId,
-      address2,
+      customerId,
       service_type,
       msg,
       product,
@@ -80,18 +88,25 @@ export const createOrder = async (req, res, next) => {
       message: "Order created with initial status as 'unassigned'.",
     });
 
+    // Save the order
     const savedOrder = await newOrder.save();
+
+    // Populate the customer and their customerOf field
+    const populatedOrder = await Order.findById(savedOrder._id)
+      .populate({
+        path: "customerId",
+        populate: { path: "customerOf", model: "User" },
+      });
 
     res.status(201).json({
       success: true,
       message: "Order created successfully",
-      data: savedOrder,
+      data: populatedOrder,
     });
   } catch (error) {
     next(error);
   }
 };
-
 
 //////////////////////// Controller to get all orders //////////////////////////
 export const getAllOrders = asyncFunHandler(async (req, res, next) => {
@@ -109,7 +124,7 @@ export const getAllOrders = asyncFunHandler(async (req, res, next) => {
 
   // Fetch paginated orders
   const orders = await Order.find(filter)
-    .populate('userId')
+    .populate('customerId')
     .populate({
       path: 'assigned_driver',
       match: { _id: { $exists: true } }, // Ensure the driver exists
@@ -133,10 +148,10 @@ export const getAllOrders = asyncFunHandler(async (req, res, next) => {
 
 //////////////////////////////  Controller to get an order by userId ///////////////////////
 export const getOrderByUserId = asyncFunHandler(async (req, res, next) => {
-  const { userId } = req.params;
+  const { customerId } = req.params;
 
   // Fetch the order using userId instead of order ID
-  const order = await Order.findOne({ userId }).populate('userId');
+  const order = await Order.findOne({ customerId }).populate('customerId');
 
   if (!order) {
     return next(new CustomErrorHandler("Order not found for the provided user ID", 404));
@@ -153,19 +168,15 @@ export const getOrderByUserId = asyncFunHandler(async (req, res, next) => {
 ///////////////////////////////// Controller to update an order by ID///////////
 export const updateOrder = async (req, res, next) => {
   try {
-    const { userId } = req.params; // Order ID
+    const { customerId } = req.params;
     const { order_status, assigned_driver, reason } = req.body;
-
-    // Find the order
-    const order = await Order.findById(userId);
+    const order = await Order.findById(customerId);
     if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
 
-    const logs = []; // To accumulate log changes
-    let combinedLogMessage = ""; // For creating a single log message
-
-    // Handle `order_status` update
+    const logs = [];
+    let combinedLogMessage = "";
     if (order_status && order_status !== order.order_status) {
       let statusMessage = `Order status updated to '${order_status}'`;
       if (order_status === "pickup") {
@@ -176,11 +187,9 @@ export const updateOrder = async (req, res, next) => {
         statusMessage = `Order successfully delivered`;
       }
 
-      combinedLogMessage += statusMessage; // Add to combined message
+      combinedLogMessage += statusMessage;
       order.order_status = order_status;
     }
-
-    // Handle `assigned_driver` update
     if (assigned_driver && assigned_driver !== String(order.assigned_driver)) {
       const driver = await User.findById(assigned_driver).select("name");
       if (!driver) {
@@ -190,32 +199,32 @@ export const updateOrder = async (req, res, next) => {
       const driverMessage = `Driver '${driver.name}' assigned to the order`;
       combinedLogMessage += combinedLogMessage ? ` | ${driverMessage}` : driverMessage;
 
-      order.assigned_driver = assigned_driver; // Store only the ID in the order
+      order.assigned_driver = assigned_driver;
     }
 
-    // If no changes, return without update
     if (!combinedLogMessage) {
       return res.status(400).json({ success: false, message: "No changes to update" });
     }
 
-    // Create a single log entry if any updates occurred
     logs.push({
       order_status: order.order_status,
-      assigned_driver: assigned_driver || order.assigned_driver, // Keep the current driver ID if not updated
+      assigned_driver: assigned_driver || order.assigned_driver,
       message: combinedLogMessage,
       reason: reason || "No reason provided",
       date: new Date(),
     });
 
-    // Append logs and save the order
     if (logs.length > 0) {
       order.logs.push(...logs);
     }
 
     const updatedOrder = await order.save();
-
-    // Populate `assigned_driver` for response (for frontend purposes)
-    const populatedOrder = await Order.findById(updatedOrder._id).populate("assigned_driver", "name");
+    const populatedOrder = await Order.findById(updatedOrder._id)
+      .populate("assigned_driver", "name")
+      .populate({
+        path: "customerId",
+        populate: { path: "customerOf", model: "User" },
+      });
 
     res.status(200).json({
       success: true,
@@ -231,7 +240,10 @@ export const updateOrder = async (req, res, next) => {
 // get order by tracking order id 
 export const getOrderByTrackingCode = asyncFunHandler(async (req, res, next) => {
   const { track_order } = req.params;
-  const getOrder = await Order.findOne({ track_order }).populate('userId');
+  const getOrder = await Order.findOne({ track_order }).populate('customerId').populate({
+    path: "customerId",
+    populate: { path: "customerOf", model: "User" },
+  });
   if (!getOrder) {
     return next(new CustomErrorHandler("Order not found", 404));
   }
@@ -296,7 +308,7 @@ export const getAllOrdersByCustomerOfIdAndStatus = asyncFunHandler(async (req, r
   }
   const orders = await Order.find(filter)
     .populate({
-      path: 'userId',
+      path: 'customerId',
       match: { customerOf: customerOfId }
     })
     .populate({
@@ -305,10 +317,10 @@ export const getAllOrdersByCustomerOfIdAndStatus = asyncFunHandler(async (req, r
     })
     .skip(skip)
     .limit(parseInt(limit));
-  const filteredOrders = orders.filter(order => order.userId !== null);
+  const filteredOrders = orders.filter(order => order.customerId !== null);
   const totalOrders = await Order.countDocuments({
     ...filter,
-    userId: { $ne: null },
+    customerId: { $ne: null },
   });
 
   // If no orders found
@@ -333,7 +345,7 @@ export const getAllOrdersByCustomerOfIdAndStatus = asyncFunHandler(async (req, r
 
 ////////// get order status summary of particular driver only //////////////
 export const getOrderStatusSummaryForDriver = asyncFunHandler(async (req, res, next) => {
-  const driverId = req.user.id; 
+  const driverId = req.user.id;
 
   if (!driverId) {
     return next(new CustomErrorHandler("Driver ID not found in token", 401));
@@ -422,12 +434,15 @@ export const getOrdersByStatusForDriver = asyncFunHandler(async (req, res, next)
     "logs.date": { $gte: startOfDay, $lte: endOfDay },
   })
     .populate({
-      path: "userId",
+      path: "customerId",
       select: "-password", // Exclude password for security
     })
     .populate({
       path: "assigned_driver",
       select: "-password", // Exclude password for security
+    }).populate({
+      path: "customerId",
+      populate: { path: "customerOf", model: "User" },
     });
 
   // Filter orders based on the latest status log for today
@@ -450,7 +465,7 @@ export const getOrdersByStatusForDriver = asyncFunHandler(async (req, res, next)
     delete orderObject.logs; // Remove the logs field
     return {
       ...orderObject,
-      userId: order.userId,
+      customerId: order.customerId,
       assigned_driver: order.assigned_driver,
     };
   });
@@ -466,7 +481,10 @@ export const getOrdersByStatusForDriver = asyncFunHandler(async (req, res, next)
 //////////////////////// API to get order by order_token ////////////////////////////
 export const getOrderByOrderToken = asyncFunHandler(async (req, res, next) => {
   const { order_token } = req.params;
-  const order = await Order.findOne({ order_token }).populate("userId").populate("assigned_driver").select("-logs");;
+  const order = await Order.findOne({ order_token }).populate("customerId").populate("assigned_driver").select("-logs").populate({
+    path: "customerId",
+    populate: { path: "customerOf", model: "User" },
+  });
   if (!order) {
     return next(new CustomErrorHandler("Order not found", 404));
   }
