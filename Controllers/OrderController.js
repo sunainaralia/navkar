@@ -61,8 +61,8 @@ export const updateCustomerById = asyncFunHandler(async (req, res, next) => {
 ///////////////////////////////////// create order///////////////////////////////
 export const createOrder = async (req, res, next) => {
   try {
-    const {
-      customerId,
+    let {
+      recieverId,
       service_type,
       msg,
       product,
@@ -71,9 +71,8 @@ export const createOrder = async (req, res, next) => {
       shift,
     } = req.body;
 
-    // Create a new order
     const newOrder = new Order({
-      customerId,
+      recieverId,
       service_type,
       msg,
       product,
@@ -81,8 +80,6 @@ export const createOrder = async (req, res, next) => {
       DropUpDate,
       shift,
     });
-
-    // Add initial log for the order
     newOrder.logs.push({
       order_status: "unassigned",
       message: "Order created with initial status as 'unassigned'.",
@@ -91,22 +88,31 @@ export const createOrder = async (req, res, next) => {
     // Save the order
     const savedOrder = await newOrder.save();
 
-    // Populate the customer and their customerOf field
+    // Populate the customer and their senderId field
     const populatedOrder = await Order.findById(savedOrder._id)
       .populate({
-        path: "customerId",
-        populate: { path: "customerOf", model: "User" },
+        path: "recieverId",
+        populate: { path: "senderId", model: "User" },
       });
+
+    const senderId = populatedOrder.recieverId.senderId;
+    recieverId = { ...populatedOrder.recieverId._doc }; 
+    delete recieverId.senderId; 
 
     res.status(201).json({
       success: true,
       message: "Order created successfully",
-      data: populatedOrder,
+      data: {
+        ...populatedOrder._doc,
+        recieverId,
+        senderId,
+      },
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 //////////////////////// Controller to get all orders //////////////////////////
 export const getAllOrders = asyncFunHandler(async (req, res, next) => {
@@ -124,17 +130,33 @@ export const getAllOrders = asyncFunHandler(async (req, res, next) => {
 
   // Fetch paginated orders
   const orders = await Order.find(filter)
-    .populate('customerId')
     .populate({
-      path: 'assigned_driver',
+      path: "recieverId",
+      populate: { path: "senderId", model: "User" },
+    })
+    .populate({
+      path: "assigned_driver",
       match: { _id: { $exists: true } }, // Ensure the driver exists
     })
     .skip(skip)
     .limit(limit);
 
+  // Restructure each order to include senderId as a top-level field
+  const formattedOrders = orders.map((order) => {
+    const senderId = order.recieverId.senderId;
+    const recieverId = { ...order.recieverId._doc };
+    delete recieverId.senderId; // Remove senderId from nested recieverId
+
+    return {
+      ...order._doc,
+      recieverId,
+      senderId, // Add senderId as a top-level field
+    };
+  });
+
   res.status(200).json({
     success: true,
-    data: orders,
+    data: formattedOrders,
     msg: "Orders fetched successfully",
     pagination: {
       totalOrders,
@@ -148,19 +170,36 @@ export const getAllOrders = asyncFunHandler(async (req, res, next) => {
 
 //////////////////////////////  Controller to get an order by userId ///////////////////////
 export const getOrderByUserId = asyncFunHandler(async (req, res, next) => {
-  const { customerId } = req.params;
+  const { recieverId } = req.params;
 
-  // Fetch the order using userId instead of order ID
-  const order = await Order.findOne({ customerId }).populate('customerId');
+  // Fetch the order using recieverId
+  const order = await Order.findOne({ recieverId })
+    .populate({
+      path: "recieverId",
+      populate: { path: "senderId", model: "User" },
+    });
 
   if (!order) {
-    return next(new CustomErrorHandler("Order not found for the provided user ID", 404));
+    return next(
+      new CustomErrorHandler("Order not found for the provided user ID", 404)
+    );
   }
+
+  // Restructure the order to include senderId as a top-level field
+  const senderId = order.recieverId.senderId;
+  const formattedRecieverId = { ...order.recieverId._doc };
+  delete formattedRecieverId.senderId; // Remove senderId from nested recieverId
+
+  const formattedOrder = {
+    ...order._doc,
+    recieverId: formattedRecieverId,
+    senderId, // Add senderId as a top-level field
+  };
 
   res.status(200).json({
     success: true,
-    data: order,
-    msg: "order is retrieved successfully"
+    data: formattedOrder,
+    msg: "Order is retrieved successfully",
   });
 });
 
@@ -168,15 +207,19 @@ export const getOrderByUserId = asyncFunHandler(async (req, res, next) => {
 ///////////////////////////////// Controller to update an order by ID///////////
 export const updateOrder = async (req, res, next) => {
   try {
-    const { customerId } = req.params;
+    const { recieverId } = req.params;
     const { order_status, assigned_driver, reason } = req.body;
-    const order = await Order.findById(customerId);
+
+    // Find the order by ID
+    const order = await Order.findById(recieverId);
     if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
 
     const logs = [];
     let combinedLogMessage = "";
+
+    // Update order_status and log the change
     if (order_status && order_status !== order.order_status) {
       let statusMessage = `Order status updated to '${order_status}'`;
       if (order_status === "pickup") {
@@ -190,6 +233,8 @@ export const updateOrder = async (req, res, next) => {
       combinedLogMessage += statusMessage;
       order.order_status = order_status;
     }
+
+    // Update assigned_driver and log the change
     if (assigned_driver && assigned_driver !== String(order.assigned_driver)) {
       const driver = await User.findById(assigned_driver).select("name");
       if (!driver) {
@@ -206,6 +251,7 @@ export const updateOrder = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "No changes to update" });
     }
 
+    // Add logs
     logs.push({
       order_status: order.order_status,
       assigned_driver: assigned_driver || order.assigned_driver,
@@ -218,18 +264,32 @@ export const updateOrder = async (req, res, next) => {
       order.logs.push(...logs);
     }
 
+    // Save the updated order
     const updatedOrder = await order.save();
+
+    // Populate nested fields
     const populatedOrder = await Order.findById(updatedOrder._id)
       .populate("assigned_driver", "name")
       .populate({
-        path: "customerId",
-        populate: { path: "customerOf", model: "User" },
+        path: "recieverId",
+        populate: { path: "senderId", model: "User" },
       });
+
+    // Restructure the response to move senderId to the top level
+    const senderId = populatedOrder.recieverId.senderId;
+    const formattedRecieverId = { ...populatedOrder.recieverId._doc };
+    delete formattedRecieverId.senderId; // Remove senderId from nested recieverId
+
+    const formattedOrder = {
+      ...populatedOrder._doc,
+      recieverId: formattedRecieverId,
+      senderId, // Add senderId as a top-level field
+    };
 
     res.status(200).json({
       success: true,
       message: "Order updated successfully with detailed logs",
-      data: populatedOrder,
+      data: formattedOrder,
     });
   } catch (error) {
     next(error);
@@ -237,22 +297,41 @@ export const updateOrder = async (req, res, next) => {
 };
 
 
+
 // get order by tracking order id 
 export const getOrderByTrackingCode = asyncFunHandler(async (req, res, next) => {
   const { track_order } = req.params;
-  const getOrder = await Order.findOne({ track_order }).populate('customerId').populate({
-    path: "customerId",
-    populate: { path: "customerOf", model: "User" },
-  });
+
+  // Find the order and populate fields
+  const getOrder = await Order.findOne({ track_order })
+    .populate({
+      path: "recieverId",
+      populate: { path: "senderId", model: "User" },
+    });
+
   if (!getOrder) {
     return next(new CustomErrorHandler("Order not found", 404));
   }
+
+  // Extract and restructure senderId
+  const senderId = getOrder.recieverId.senderId;
+  const formattedRecieverId = { ...getOrder.recieverId._doc };
+  delete formattedRecieverId.senderId; // Remove senderId from nested recieverId
+
+  // Restructure the order object
+  const formattedOrder = {
+    ...getOrder._doc,
+    recieverId: formattedRecieverId,
+    senderId, // Add senderId as a top-level field
+  };
+
   res.status(200).json({
     success: true,
-    data: getOrder,
-    msg: "order logs are found"
-  })
+    data: formattedOrder,
+    msg: "Order logs are found",
+  });
 });
+
 
 
 /////////////////////////////////////// get total list of all orders /////////////////////////
@@ -306,26 +385,44 @@ export const getAllOrdersByCustomerOfIdAndStatus = asyncFunHandler(async (req, r
   if (order_status) {
     filter.order_status = order_status;
   }
+
+  // Fetch orders and populate necessary fields
   const orders = await Order.find(filter)
     .populate({
-      path: 'customerId',
-      match: { customerOf: customerOfId }
+      path: "recieverId",
+      match: { senderId: customerOfId },
+      populate: { path: "senderId", model: "User" },
     })
     .populate({
-      path: 'assigned_driver',
-      select: 'name email phone_no',
+      path: "assigned_driver",
+      select: "name email phone_no",
     })
     .skip(skip)
     .limit(parseInt(limit));
-  const filteredOrders = orders.filter(order => order.customerId !== null);
+
+  // Filter out orders where recieverId does not match the condition
+  const filteredOrders = orders
+    .filter((order) => order.recieverId !== null)
+    .map((order) => {
+      const senderId = order.recieverId.senderId;
+      const formattedRecieverId = { ...order.recieverId._doc };
+      delete formattedRecieverId.senderId; // Remove senderId from nested recieverId
+
+      return {
+        ...order._doc,
+        recieverId: formattedRecieverId,
+        senderId, // Add senderId as a top-level field
+      };
+    });
+
   const totalOrders = await Order.countDocuments({
     ...filter,
-    customerId: { $ne: null },
+    recieverId: { $ne: null },
   });
 
   // If no orders found
   if (filteredOrders.length === 0) {
-    return next(new CustomErrorHandler("No orders found for this customerOf ID and order status", 404));
+    return next(new CustomErrorHandler("No orders found for this senderId and order status", 404));
   }
 
   // Send the response
@@ -341,7 +438,6 @@ export const getAllOrdersByCustomerOfIdAndStatus = asyncFunHandler(async (req, r
     },
   });
 });
-
 
 ////////// get order status summary of particular driver only //////////////
 export const getOrderStatusSummaryForDriver = asyncFunHandler(async (req, res, next) => {
@@ -434,15 +530,13 @@ export const getOrdersByStatusForDriver = asyncFunHandler(async (req, res, next)
     "logs.date": { $gte: startOfDay, $lte: endOfDay },
   })
     .populate({
-      path: "customerId",
+      path: "recieverId",
       select: "-password", // Exclude password for security
+      populate: { path: "senderId", model: "User", select: "-password" },
     })
     .populate({
       path: "assigned_driver",
       select: "-password", // Exclude password for security
-    }).populate({
-      path: "customerId",
-      populate: { path: "customerOf", model: "User" },
     });
 
   // Filter orders based on the latest status log for today
@@ -459,13 +553,19 @@ export const getOrdersByStatusForDriver = asyncFunHandler(async (req, res, next)
     return false;
   });
 
-  // Format the response and remove logs
+  // Format the response and separate senderId from recieverId
   const response = filteredOrders.map((order) => {
     const orderObject = order.toObject();
+    const { recieverId } = orderObject;
+    const senderId = recieverId?.senderId || null; // Extract senderId
+
     delete orderObject.logs; // Remove the logs field
+    delete orderObject.recieverId.senderId; // Remove senderId from recieverId
+
     return {
       ...orderObject,
-      customerId: order.customerId,
+      recieverId,
+      senderId, // Include senderId at the top level
       assigned_driver: order.assigned_driver,
     };
   });
@@ -481,16 +581,35 @@ export const getOrdersByStatusForDriver = asyncFunHandler(async (req, res, next)
 //////////////////////// API to get order by order_token ////////////////////////////
 export const getOrderByOrderToken = asyncFunHandler(async (req, res, next) => {
   const { order_token } = req.params;
-  const order = await Order.findOne({ order_token }).populate("customerId").populate("assigned_driver").select("-logs").populate({
-    path: "customerId",
-    populate: { path: "customerOf", model: "User" },
-  });
+
+  // Fetch the order based on the order_token
+  const order = await Order.findOne({ order_token })
+    .populate("recieverId")  // Populate recieverId
+    .populate("assigned_driver")  // Populate assigned_driver
+    .select("-logs")  // Exclude logs from the result
+    .populate({
+      path: "recieverId",
+      populate: { path: "senderId", model: "User" },  // Populate senderId within recieverId
+    });
+
   if (!order) {
     return next(new CustomErrorHandler("Order not found", 404));
   }
+
+  // Extract senderId from recieverId and include it at the top level
+  const orderObject = order.toObject();
+  const senderId = orderObject.recieverId?.senderId || null;  // Extract senderId
+  delete orderObject.recieverId.senderId;  // Remove senderId from recieverId
+
+  // Send the response with senderId as a top-level field
   res.status(200).json({
     success: true,
-    data: order,
+    data: {
+      ...orderObject,
+      recieverId: orderObject.recieverId,  // Keep recieverId, without senderId nested
+      senderId,  // Include senderId at the top level
+      assigned_driver: orderObject.assigned_driver,  // Keep assigned_driver
+    },
     message: "Order retrieved successfully",
   });
 });

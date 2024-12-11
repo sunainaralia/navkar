@@ -43,7 +43,7 @@ clientOrderRouter.route('/')
   .get(VerifyToken, getAllOrders)
 
 // Get a specific order by userId
-clientOrderRouter.route('/:customerId')
+clientOrderRouter.route('/:recieverId')
   .get(VerifyToken, getOrderByUserId)
   .patch(VerifyToken, updateOrder)
 

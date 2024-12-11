@@ -21,7 +21,7 @@ const CustomerSchema = new mongoose.Schema({
   postalCode: { type: Number, default: null },
   address1: { type: String, default: null },
   address2: { type: String, default: null },
-  customerOf: {
+  senderId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
@@ -48,7 +48,7 @@ const allowedStatuses = [
 // Order schema
 const OrderSchema = new mongoose.Schema(
   {
-    customerId: {
+    recieverId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
       required: true,
