@@ -6,20 +6,14 @@ import mongoose from 'mongoose';
 // ////////////////////get all provinces//////////////////
 export const getAllProvinces = asyncFunHandler(async (req, res, next) => {
   const { page = 1, limit = 10 } = req.query; 
-
-  // Convert page and limit to numbers
   const pageNumber = parseInt(page, 10);
   const limitNumber = parseInt(limit, 10);
 
   const skip = (pageNumber - 1) * limitNumber;
-
-  // Aggregate pipeline with pagination
   const provinces = await Province.aggregate([
     { $skip: skip },
     { $limit: limitNumber },
   ]);
-
-  // Get the total number of provinces
   const totalProvinces = await Province.countDocuments();
   if (!provinces.length) {
     return next(new CustomErrorHandler("No provinces found", 404));
@@ -42,16 +36,12 @@ export const getAllProvinces = asyncFunHandler(async (req, res, next) => {
 // /////////////////////////post province///////////////////////////
 export const createProvince = asyncFunHandler(async (req, res, next) => {
   const { province } = req.body;
-
-  // Validate request body
   if (!Array.isArray(province) || province.length === 0) {
     return res.status(400).json({
       success: false,
       msg: "Province must be a non-empty array.",
     });
   }
-
-  // Validate each object in the province array
   const provincesData = province.map((item) => {
     if (!item.name || !item.city || !item.zone || !item.postal_code) {
       next (new CustomErrorHandler("Each province object must include name, city, zone, service_charge, and postal_code."))
@@ -65,7 +55,6 @@ export const createProvince = asyncFunHandler(async (req, res, next) => {
   });
 
   try {
-    // Insert all documents into the database
     const createdProvinces = await Province.insertMany(provincesData);
 
     res.status(201).json({
@@ -74,7 +63,6 @@ export const createProvince = asyncFunHandler(async (req, res, next) => {
       data: createdProvinces,
     });
   } catch (error) {
-    // Handle any error during insertion
     next(new CustomErrorHandler(error.message, 500));
   }
 });

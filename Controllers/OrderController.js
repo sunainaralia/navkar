@@ -4,6 +4,7 @@ import Order from '../Models/OrderOfClient.js';
 import asyncFunHandler from '../Utils/asyncFunHandler.js';
 import CustomErrorHandler from '../Utils/CustomErrorHandler.js';
 import mongoose from 'mongoose';
+import { Rack, RackOrder } from "../Models/OrderOfClient.js";
 // Create a new Customer
 export const createCustomer = asyncFunHandler(async (req, res, next) => {
   const customer = await Customer.create(req.body);
@@ -47,7 +48,6 @@ export const updateCustomerById = asyncFunHandler(async (req, res, next) => {
       runValidators: true,
     }
   );
-  // If customer is not found
   if (!customer) {
     return next(new CustomErrorHandler("Customer not found", 404));
   }
@@ -84,11 +84,8 @@ export const createOrder = async (req, res, next) => {
       order_status: "unassigned",
       message: "Order created with initial status as 'unassigned'.",
     });
-
-    // Save the order
     const savedOrder = await newOrder.save();
 
-    // Populate the customer and their senderId field
     const populatedOrder = await Order.findById(savedOrder._id)
       .populate({
         path: "recieverId",
@@ -125,10 +122,8 @@ export const getAllOrders = asyncFunHandler(async (req, res, next) => {
     filter.order_status = order_status;
   }
 
-  // Get total count of orders matching the filter for pagination metadata
   const totalOrders = await Order.countDocuments(filter);
 
-  // Fetch paginated orders
   const orders = await Order.find(filter)
     .populate({
       path: "recieverId",
@@ -136,21 +131,19 @@ export const getAllOrders = asyncFunHandler(async (req, res, next) => {
     })
     .populate({
       path: "assigned_driver",
-      match: { _id: { $exists: true } }, // Ensure the driver exists
+      match: { _id: { $exists: true } },
     })
     .skip(skip)
     .limit(limit);
-
-  // Restructure each order to include senderId as a top-level field
   const formattedOrders = orders.map((order) => {
     const senderId = order.recieverId.senderId;
     const recieverId = { ...order.recieverId._doc };
-    delete recieverId.senderId; // Remove senderId from nested recieverId
+    delete recieverId.senderId; 
 
     return {
       ...order._doc,
       recieverId,
-      senderId, // Add senderId as a top-level field
+      senderId,
     };
   });
 
@@ -171,8 +164,6 @@ export const getAllOrders = asyncFunHandler(async (req, res, next) => {
 //////////////////////////////  Controller to get an order by userId ///////////////////////
 export const getOrderByUserId = asyncFunHandler(async (req, res, next) => {
   const { recieverId } = req.params;
-
-  // Fetch the order using recieverId
   const order = await Order.findOne({ recieverId })
     .populate({
       path: "recieverId",
@@ -184,16 +175,14 @@ export const getOrderByUserId = asyncFunHandler(async (req, res, next) => {
       new CustomErrorHandler("Order not found for the provided user ID", 404)
     );
   }
-
-  // Restructure the order to include senderId as a top-level field
   const senderId = order.recieverId.senderId;
   const formattedRecieverId = { ...order.recieverId._doc };
-  delete formattedRecieverId.senderId; // Remove senderId from nested recieverId
+  delete formattedRecieverId.senderId; 
 
   const formattedOrder = {
     ...order._doc,
     recieverId: formattedRecieverId,
-    senderId, // Add senderId as a top-level field
+    senderId,
   };
 
   res.status(200).json({
@@ -209,8 +198,6 @@ export const updateOrder = async (req, res, next) => {
   try {
     const { recieverId } = req.params;
     const { order_status, assigned_driver, reason } = req.body;
-
-    // Find the order by ID
     const order = await Order.findById(recieverId);
     if (!order) {
       return res.status(404).json({ success: false, message: "Order not found" });
@@ -218,8 +205,6 @@ export const updateOrder = async (req, res, next) => {
 
     const logs = [];
     let combinedLogMessage = "";
-
-    // Update order_status and log the change
     if (order_status && order_status !== order.order_status) {
       let statusMessage = `Order status updated to '${order_status}'`;
       if (order_status === "pickup") {
@@ -233,8 +218,6 @@ export const updateOrder = async (req, res, next) => {
       combinedLogMessage += statusMessage;
       order.order_status = order_status;
     }
-
-    // Update assigned_driver and log the change
     if (assigned_driver && assigned_driver !== String(order.assigned_driver)) {
       const driver = await User.findById(assigned_driver).select("name");
       if (!driver) {
@@ -250,8 +233,6 @@ export const updateOrder = async (req, res, next) => {
     if (!combinedLogMessage) {
       return res.status(400).json({ success: false, message: "No changes to update" });
     }
-
-    // Add logs
     logs.push({
       order_status: order.order_status,
       assigned_driver: assigned_driver || order.assigned_driver,
@@ -264,10 +245,8 @@ export const updateOrder = async (req, res, next) => {
       order.logs.push(...logs);
     }
 
-    // Save the updated order
     const updatedOrder = await order.save();
 
-    // Populate nested fields
     const populatedOrder = await Order.findById(updatedOrder._id)
       .populate("assigned_driver", "name")
       .populate({
@@ -278,12 +257,12 @@ export const updateOrder = async (req, res, next) => {
     // Restructure the response to move senderId to the top level
     const senderId = populatedOrder.recieverId.senderId;
     const formattedRecieverId = { ...populatedOrder.recieverId._doc };
-    delete formattedRecieverId.senderId; // Remove senderId from nested recieverId
+    delete formattedRecieverId.senderId;
 
     const formattedOrder = {
       ...populatedOrder._doc,
       recieverId: formattedRecieverId,
-      senderId, // Add senderId as a top-level field
+      senderId,
     };
 
     res.status(200).json({
@@ -302,7 +281,6 @@ export const updateOrder = async (req, res, next) => {
 export const getOrderByTrackingCode = asyncFunHandler(async (req, res, next) => {
   const { track_order } = req.params;
 
-  // Find the order and populate fields
   const getOrder = await Order.findOne({ track_order })
     .populate({
       path: "recieverId",
@@ -312,17 +290,13 @@ export const getOrderByTrackingCode = asyncFunHandler(async (req, res, next) => 
   if (!getOrder) {
     return next(new CustomErrorHandler("Order not found", 404));
   }
-
-  // Extract and restructure senderId
   const senderId = getOrder.recieverId.senderId;
   const formattedRecieverId = { ...getOrder.recieverId._doc };
-  delete formattedRecieverId.senderId; // Remove senderId from nested recieverId
-
-  // Restructure the order object
+  delete formattedRecieverId.senderId;
   const formattedOrder = {
     ...getOrder._doc,
     recieverId: formattedRecieverId,
-    senderId, // Add senderId as a top-level field
+    senderId,
   };
 
   res.status(200).json({
@@ -336,23 +310,20 @@ export const getOrderByTrackingCode = asyncFunHandler(async (req, res, next) => 
 
 /////////////////////////////////////// get total list of all orders /////////////////////////
 export const getOrderStatusSummary = asyncFunHandler(async (req, res, next) => {
-  // Get the start and end of the current day
   const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0); // Set time to 00:00:00
+  startOfDay.setHours(0, 0, 0, 0);
   const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999); // Set time to 23:59:59
-
-  // Perform aggregation
+  endOfDay.setHours(23, 59, 59, 999);
   const statusSummary = await Order.aggregate([
     {
       $match: {
-        createdAt: { $gte: startOfDay, $lte: endOfDay } // Filter orders for today
+        createdAt: { $gte: startOfDay, $lte: endOfDay }
       }
     },
     {
       $group: {
-        _id: "$order_status", // Group by order status
-        total: { $sum: 1 } // Count orders per status
+        _id: "$order_status",
+        total: { $sum: 1 } 
       }
     },
     {
@@ -364,7 +335,6 @@ export const getOrderStatusSummary = asyncFunHandler(async (req, res, next) => {
     }
   ]);
 
-  // Handle case when no orders exist
   if (!statusSummary || statusSummary.length === 0) {
     return next(new CustomErrorHandler("No orders found for today", 404));
   }
@@ -385,8 +355,6 @@ export const getAllOrdersByCustomerOfIdAndStatus = asyncFunHandler(async (req, r
   if (order_status) {
     filter.order_status = order_status;
   }
-
-  // Fetch orders and populate necessary fields
   const orders = await Order.find(filter)
     .populate({
       path: "recieverId",
@@ -399,19 +367,17 @@ export const getAllOrdersByCustomerOfIdAndStatus = asyncFunHandler(async (req, r
     })
     .skip(skip)
     .limit(parseInt(limit));
-
-  // Filter out orders where recieverId does not match the condition
   const filteredOrders = orders
     .filter((order) => order.recieverId !== null)
     .map((order) => {
       const senderId = order.recieverId.senderId;
       const formattedRecieverId = { ...order.recieverId._doc };
-      delete formattedRecieverId.senderId; // Remove senderId from nested recieverId
+      delete formattedRecieverId.senderId;
 
       return {
         ...order._doc,
         recieverId: formattedRecieverId,
-        senderId, // Add senderId as a top-level field
+        senderId,
       };
     });
 
@@ -425,7 +391,6 @@ export const getAllOrdersByCustomerOfIdAndStatus = asyncFunHandler(async (req, r
     return next(new CustomErrorHandler("No orders found for this senderId and order status", 404));
   }
 
-  // Send the response
   res.status(200).json({
     success: true,
     data: filteredOrders,
@@ -446,53 +411,38 @@ export const getOrderStatusSummaryForDriver = asyncFunHandler(async (req, res, n
   if (!driverId) {
     return next(new CustomErrorHandler("Driver ID not found in token", 401));
   }
-
-  // Fetch the driver's name
   const driver = await User.findById(driverId).select("name");
   if (!driver) {
     return next(new CustomErrorHandler("Driver not found", 404));
   }
-
-  // Define allowed order statuses
   const allowedStatuses = ["assigned", "unassigned", "pickup", "intransit", "delivered", "unfulfilled"];
 
-  // Get the start and end of the current day
   const startOfDay = new Date();
-  startOfDay.setHours(0, 0, 0, 0); // Set to 00:00:00
+  startOfDay.setHours(0, 0, 0, 0); 
   const endOfDay = new Date();
-  endOfDay.setHours(23, 59, 59, 999); // Set to 23:59:59
-
-  // Fetch orders for the driver with logs for today
+  endOfDay.setHours(23, 59, 59, 999);
   const orders = await Order.find({
     assigned_driver: driverId,
     "logs.date": { $gte: startOfDay, $lte: endOfDay },
   }).select("logs");
-
-  // Initialize counts for each status
   const statusCounts = {};
   allowedStatuses.forEach((status) => (statusCounts[status] = 0));
 
   orders.forEach((order) => {
-    // Find the most recent log for today
     const todayLogs = order.logs.filter(
       (log) => log.date >= startOfDay && log.date <= endOfDay
     );
 
     if (todayLogs.length > 0) {
-      // Sort logs by date descending to get the latest status
       const latestLog = todayLogs.sort((a, b) => b.date - a.date)[0];
-
-      // Increment the count for the latest status
       if (allowedStatuses.includes(latestLog.order_status)) {
         statusCounts[latestLog.order_status] += 1;
       }
     }
   });
-
-  // Build the final response
   const fullStatusSummary = allowedStatuses.map((status) => ({
     order_status: status,
-    total: statusCounts[status] || 0, // Default to 0 if the status is missing
+    total: statusCounts[status] || 0,
   }));
 
   res.status(200).json({
@@ -523,49 +473,44 @@ export const getOrdersByStatusForDriver = asyncFunHandler(async (req, res, next)
   startOfDay.setHours(0, 0, 0, 0);
   const endOfDay = new Date();
   endOfDay.setHours(23, 59, 59, 999);
-
-  // Fetch orders for the driver with logs for today
   const orders = await Order.find({
     assigned_driver: driverId,
     "logs.date": { $gte: startOfDay, $lte: endOfDay },
   })
     .populate({
       path: "recieverId",
-      select: "-password", // Exclude password for security
+      select: "-password",
       populate: { path: "senderId", model: "User", select: "-password" },
     })
     .populate({
       path: "assigned_driver",
-      select: "-password", // Exclude password for security
+      select: "-password",
     });
-
-  // Filter orders based on the latest status log for today
   const filteredOrders = orders.filter((order) => {
     const todayLogs = order.logs.filter(
       (log) => log.date >= startOfDay && log.date <= endOfDay
     );
 
     if (todayLogs.length > 0) {
-      // Sort logs by date descending to get the latest log
       const latestLog = todayLogs.sort((a, b) => b.date - a.date)[0];
       return latestLog.order_status === order_status;
     }
     return false;
   });
 
-  // Format the response and separate senderId from recieverId
+
   const response = filteredOrders.map((order) => {
     const orderObject = order.toObject();
     const { recieverId } = orderObject;
-    const senderId = recieverId?.senderId || null; // Extract senderId
+    const senderId = recieverId?.senderId || null;
 
-    delete orderObject.logs; // Remove the logs field
-    delete orderObject.recieverId.senderId; // Remove senderId from recieverId
+    delete orderObject.logs; 
+    delete orderObject.recieverId.senderId; 
 
     return {
       ...orderObject,
       recieverId,
-      senderId, // Include senderId at the top level
+      senderId,
       assigned_driver: order.assigned_driver,
     };
   });
@@ -581,35 +526,206 @@ export const getOrdersByStatusForDriver = asyncFunHandler(async (req, res, next)
 //////////////////////// API to get order by order_token ////////////////////////////
 export const getOrderByOrderToken = asyncFunHandler(async (req, res, next) => {
   const { order_token } = req.params;
-
-  // Fetch the order based on the order_token
   const order = await Order.findOne({ order_token })
-    .populate("recieverId")  // Populate recieverId
-    .populate("assigned_driver")  // Populate assigned_driver
-    .select("-logs")  // Exclude logs from the result
+    .populate("recieverId")
+    .populate("assigned_driver")
+    .select("-logs")
     .populate({
       path: "recieverId",
-      populate: { path: "senderId", model: "User" },  // Populate senderId within recieverId
+      populate: { path: "senderId", model: "User" },
     });
 
   if (!order) {
     return next(new CustomErrorHandler("Order not found", 404));
   }
-
-  // Extract senderId from recieverId and include it at the top level
   const orderObject = order.toObject();
-  const senderId = orderObject.recieverId?.senderId || null;  // Extract senderId
-  delete orderObject.recieverId.senderId;  // Remove senderId from recieverId
-
-  // Send the response with senderId as a top-level field
+  const senderId = orderObject.recieverId?.senderId || null; 
+  delete orderObject.recieverId.senderId;  
   res.status(200).json({
     success: true,
     data: {
       ...orderObject,
-      recieverId: orderObject.recieverId,  // Keep recieverId, without senderId nested
-      senderId,  // Include senderId at the top level
-      assigned_driver: orderObject.assigned_driver,  // Keep assigned_driver
+      recieverId: orderObject.recieverId,
+      senderId,
+      assigned_driver: orderObject.assigned_driver, 
     },
     message: "Order retrieved successfully",
+  });
+});
+
+
+
+/////////////////////////////////////// rack //////////////////////////////////////
+export const createRack = asyncFunHandler(async (req, res, next) => {
+  const { rowId, rowNo, colNo } = req.body;
+
+  const rack = new Rack({ rowId, rowNo, colNo });
+  await rack.save();
+
+  res.status(201).json({
+    success: true,
+    msg: "Rack created successfully",
+    data: rack,
+  });
+});
+
+///////////////////////////////// Get All Racks ///////////////////////////////
+export const getAllRacks = asyncFunHandler(async (req, res, next) => {
+  const racks = await Rack.find();
+
+  res.status(200).json({
+    success: true,
+    data: racks,
+  });
+});
+
+///////////////////////////////// Get Rack By ID ///////////////////////////////
+export const getRackById = asyncFunHandler(async (req, res, next) => {
+  const rack = await Rack.findById(req.params.id);
+
+  if (!rack) {
+    return next(new CustomErrorHandler("Rack not found", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    data: rack,
+  });
+});
+
+///////////////////////////////// Delete Rack By ID ////////////////////////////
+export const deleteRackById = asyncFunHandler(async (req, res, next) => {
+  const rack = await Rack.findByIdAndDelete(req.params.id);
+
+  if (!rack) {
+    return next(new CustomErrorHandler("Rack not found", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    msg: "Rack deleted successfully",
+    data: rack,
+  });
+});
+
+///////////////////////////////// Update Rack By ID ////////////////////////////
+export const updateRackById = asyncFunHandler(async (req, res, next) => {
+  const { rowId, rowNo, colNo } = req.body;
+
+  const rack = await Rack.findByIdAndUpdate(
+    req.params.id,
+    { rowId, rowNo, colNo },
+    { new: true, runValidators: true }
+  );
+
+  if (!rack) {
+    return next(new CustomErrorHandler("Rack not found", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    msg: "Rack updated successfully",
+    data: rack,
+  });
+});
+
+
+// /////////////////// ////////// add product on rack /////////////////////
+export const createRackOrder = asyncFunHandler(async (req, res, next) => {
+  const { rowId, orderId } = req.body;
+
+  const rackOrder = new RackOrder({ rowId, orderId });
+  await rackOrder.save();
+
+  const populatedRackOrder = await RackOrder.findById(rackOrder._id).populate({
+    path: 'orderId',
+    select: 'product',
+  });
+
+  res.status(201).json({
+    success: true,
+    msg: "RackOrder created successfully",
+    data: populatedRackOrder,
+  });
+});
+
+///////////////////////////////// Get All RackOrders //////////////////////////
+export const getAllRackOrders = asyncFunHandler(async (req, res, next) => {
+  const rackOrders = await RackOrder.find().populate({
+    path: 'orderId',
+    select: 'product',
+  });
+
+  res.status(200).json({
+    success: true,
+    data: rackOrders,
+  });
+});
+
+///////////////////////////////// Get RackOrder By ID /////////////////////////
+export const getRackOrderById = asyncFunHandler(async (req, res, next) => {
+  const rackOrder = await RackOrder.findById(req.params.id).populate({
+    path: 'orderId',
+    select: 'product',
+  });
+
+  if (!rackOrder) {
+    return next(new CustomErrorHandler("RackOrder not found", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    data: rackOrder,
+  });
+});
+
+///////////////////////////////// Update RackOrder By ID //////////////////////
+export const updateRackOrderById = asyncFunHandler(async (req, res, next) => {
+  const { rowId, orderId } = req.body;
+
+  const rackOrder = await RackOrder.findByIdAndUpdate(
+    req.params.id,
+    { rowId, orderId },
+    { new: true, runValidators: true }
+  ).populate({
+    path: 'orderId',
+    select: 'product',
+  });
+
+  if (!rackOrder) {
+    return next(new CustomErrorHandler("RackOrder not found", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    msg: "RackOrder updated successfully",
+    data: rackOrder,
+  });
+});
+
+///////////////////////////////// Delete RackOrder By ID //////////////////////
+export const deleteRackOrderById = asyncFunHandler(async (req, res, next) => {
+  const rackOrder = await RackOrder.findByIdAndDelete(req.params.id);
+
+  if (!rackOrder) {
+    return next(new CustomErrorHandler("RackOrder not found", 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    msg: "RackOrder deleted successfully",
+  });
+});
+
+///////////////////////////////// Get RackOrders By RowID ////////////////////
+export const getRackOrdersByRowId = asyncFunHandler(async (req, res, next) => {
+  const rackOrders = await RackOrder.find({ rowId: req.params.rowId }).populate({
+    path: 'orderId',
+    select: 'product',
+  });
+
+  res.status(200).json({
+    success: true,
+    data: rackOrders,
   });
 });

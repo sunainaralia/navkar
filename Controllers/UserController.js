@@ -26,19 +26,14 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
     status,
     ...roleSpecificData
   } = req.body;
-
-  // If password is not provided, generate a random 8-character password
   let userPassword = password;
   let userConfirmPassword = confirmPassword;
   let generatedPassword;
   if (!password) {
-    // Generate random 8-character password
     generatedPassword = crypto.randomBytes(4).toString('hex');
     userPassword = generatedPassword;
     userConfirmPassword = userPassword;
   }
-
-  // Create the common user data in User model
   const newUser = await User.create({
     name,
     email,
@@ -49,11 +44,7 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
     zone_assigned,
     status
   });
-
-  // Generate authentication token
   const token = genrateToken(newUser._id);
-
-  // Create the role-specific data in the appropriate model
   let roleData;
   if (role === 'client') {
     const client = await Client.create({
@@ -118,8 +109,6 @@ export const LoginUser = asyncFunHandler(async (req, res, next) => {
   if (!email || !password) {
     return next(new CustomErrorHandler("Email or password is not provided", 400));
   }
-
-  // Find the user by email
   const user = await User.findOne({ email });
   if (user.role !== "client" && user.role !== "driver") {
     return next(new CustomErrorHandler("you have no authority to login", 400));
@@ -128,23 +117,15 @@ export const LoginUser = asyncFunHandler(async (req, res, next) => {
   if (!user || !(await user.comparePasswordInDb(password, user.password))) {
     return next(new CustomErrorHandler("Email or password is not correct", 400));
   }
-
-  // Fetch role-specific data
   let roleData = {};
   if (user.role === 'driver') {
     roleData = await Driver.findOne({ userId: user._id }).lean();
   }
-
-  // Combine user data with role-specific data
   const combinedData = {
     ...user.toObject(),
     ...(roleData || {})
   };
-
-  // Generate token
   const token = genrateToken(user._id);
-
-  // Send response
   res.status(200).json({
     success: true,
     msg: "User logged in successfully",
@@ -159,7 +140,6 @@ export const LoginAdmin = asyncFunHandler(async (req, res, next) => {
     return next(new CustomErrorHandler("Email or password is not provided", 400));
   }
 
-  // Find the user by email
   const user = await User.findOne({ email });
   if (user.role === "client" || user.role === "driver") {
     return next(new CustomErrorHandler("you have no authority to login", 400));
@@ -168,15 +148,10 @@ export const LoginAdmin = asyncFunHandler(async (req, res, next) => {
     return next(new CustomErrorHandler("Email or password is not correct", 400));
   }
 
-  // Combine user data with role-specific data
   const combinedData = {
     ...user.toObject()
   };
-
-  // Generate token
   const token = genrateToken(user._id);
-
-  // Send response
   res.status(200).json({
     success: true,
     msg: "User logged in successfully",
@@ -196,20 +171,17 @@ export const getUserProfile = asyncFunHandler(async (req, res, next) => {
   }
 
   let profileData;
-
-  // Check the user's role and fetch data from the relevant schema
   if (user.role === 'client') {
     profileData = await Client.findOne({ userId: user._id });
   } else if (user.role === 'driver') {
     profileData = await Driver.findOne({ userId: user._id });
   }
 
-  // Combine user data with profile data, if available
   let fullProfile;
   if (profileData) {
     fullProfile = {
       ...user.toObject(),
-      ...profileData.toObject() || {} // Spread profile data if it exists
+      ...profileData.toObject() || {}
     };
   } else {
     fullProfile = {
@@ -229,7 +201,6 @@ export const editUser = asyncFunHandler(async (req, res) => {
   let role = req.user.role
   const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address, address2 } = req.body;
   const getUserndUpdate = await User.findByIdAndUpdate(req.user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status }, { new: true, runValidators: true });
-  // Update role-specific data in the appropriate model
   let roleData;
   if (role === 'client') {
     roleData = await Client.findOneAndUpdate(
@@ -335,7 +306,6 @@ export const resetPassword = asyncFunHandler(async (req, res, next) => {
     let err = new CustomErrorHandler("your token provided is not valid or expired", 403);
     return next(err);
   };
-  // setting the user password
   user.password = req.body.password;
   user.confirmPassword = req.body.confirmPassword;
   user.resetToken = undefined;
@@ -353,15 +323,11 @@ export const resetPassword = asyncFunHandler(async (req, res, next) => {
 /////////////////////// get all client//////////////////////////////
 
 export const getAllClients = asyncFunHandler(async (req, res, next) => {
-  // Fetch all clients and populate the user data
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
-
-  // Calculate the skip value
   const skip = (page - 1) * limit;
   const totalClients = await Client.countDocuments();
   const clients = await Client.find().populate('userId').skip(skip).limit(limit);
-  // If no clients are found
   if (!clients.length) {
     let err = new CustomErrorHandler("no client found", 404);
     return next(err);
@@ -398,13 +364,11 @@ export const getAllClients = asyncFunHandler(async (req, res, next) => {
 
 // ///////////////////////////// get all admin ////////////////////////
 export const getAllAdmin = asyncFunHandler(async (req, res, next) => {
-  const { page = 1, limit = 10 } = req.query; // Default values for page and limit
-
-  // Convert page and limit to numbers
+  const { page = 1, limit = 10 } = req.query;
   const pageNumber = parseInt(page, 10);
   const limitNumber = parseInt(limit, 10);
 
-  const skip = (pageNumber - 1) * limitNumber; // Calculate the number of documents to skip
+  const skip = (pageNumber - 1) * limitNumber; 
 
   const admins = await User.find({ role: { $nin: ['client', 'driver'] } })
     .skip(skip)
@@ -435,12 +399,9 @@ export const getAllAdmin = asyncFunHandler(async (req, res, next) => {
 export const getAllDrivers = asyncFunHandler(async (req, res, next) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
-
-  // Calculate the skip value
   const skip = (page - 1) * limit;
   const totalDrivers = await Driver.countDocuments();
   const drivers = await Driver.find().populate('userId').skip(skip).limit(limit);;
-  // If no drivers are found
   if (!drivers.length) {
     let err = new CustomErrorHandler("no driver found", 404);
     return next(err);
@@ -484,19 +445,16 @@ export const getUserProfileById = asyncFunHandler(async (req, res, next) => {
 
   let profileData;
 
-  // Check the user's role and fetch data from the relevant schema
   if (user.role === 'client') {
     profileData = await Client.findOne({ userId: user._id });
   } else if (user.role === 'driver') {
     profileData = await Driver.findOne({ userId: user._id });
   }
-
-  // Combine user data with profile data, if available
   let fullProfile;
   if (profileData) {
     fullProfile = {
       ...user.toObject(),
-      ...profileData.toObject() || {} // Spread profile data if it exists
+      ...profileData.toObject() || {}
     };
   } else {
     fullProfile = {
@@ -519,7 +477,6 @@ export const editUserById = asyncFunHandler(async (req, res) => {
   let role = user.role
   const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address, address2 } = req.body;
   const getUserndUpdate = await User.findByIdAndUpdate(user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status }, { new: true, runValidators: true });
-  // Update role-specific data in the appropriate model
   let roleData;
   if (role === 'client') {
     roleData = await Client.findOneAndUpdate(
@@ -557,15 +514,11 @@ export const editUserById = asyncFunHandler(async (req, res) => {
 ////////////////////////////// delete client,admin,driver by id////////////////////////
 export const deleteUserById = asyncFunHandler(async (req, res, next) => {
   let user = await User.findById(req.params.id);
-
-  // Check if user exists
   if (!user) {
-    return next(new CustomErrorHandler("No user found", 404)); // Return the error
+    return next(new CustomErrorHandler("No user found", 404));
   }
 
   let role = user.role;
-
-  // Handle role-specific deletions
   if (role === "client") {
     await Customer.findOneAndDelete({ customerOf: user.id });
     await Client.findOneAndDelete({ userId: user.id });

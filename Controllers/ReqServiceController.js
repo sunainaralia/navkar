@@ -5,22 +5,17 @@ import mongoose from 'mongoose';
 
 ///////////////////////////////// Get all contacts //////////////////////
 export const getAllContacts = asyncFunHandler(async (req, res, next) => {
-  const { page = 1, limit = 10 } = req.query; // Default values for page and limit
+  const { page = 1, limit = 10 } = req.query;
 
-  // Convert page and limit to numbers
   const pageNumber = parseInt(page, 10);
   const limitNumber = parseInt(limit, 10);
 
-  const skip = (pageNumber - 1) * limitNumber; // Calculate the number of documents to skip
-
-  // Fetch the contacts with pagination
+  const skip = (pageNumber - 1) * limitNumber;
   const contacts = await Contact.find().skip(skip).limit(limitNumber);
-
-  // Get the total count of contacts
   const totalContacts = await Contact.countDocuments();
 
   if (!contacts.length) {
-    return next(new CustomErrorHandler("No contacts found", 404)); // Not Found
+    return next(new CustomErrorHandler("No contacts found", 404));
   }
 
   res.status(200).json({

@@ -109,7 +109,6 @@ const OrderSchema = new mongoose.Schema(
 
 // Pre-save hook for generating `track_order` and `order_token`
 OrderSchema.pre("save", async function (next) {
-  // Generate tracking code
   if (!this.track_order) {
     const counter = await Counter.findOneAndUpdate(
       { name: "order_track" },
@@ -120,7 +119,6 @@ OrderSchema.pre("save", async function (next) {
     this.track_order = `NL${paddedNumber}`;
   }
 
-  // Generate order token
   if (!this.order_token) {
     this.order_token = `${this._id}_${Date.now()}`;
   }
@@ -130,3 +128,66 @@ OrderSchema.pre("save", async function (next) {
 
 const Order = mongoose.model("Order", OrderSchema);
 export default Order;
+
+
+
+/////////////////////////////////// rack Schema /////////////////////////////////
+const RackSchema = new mongoose.Schema(
+  {
+    rowId: {
+      type: String,
+      required: true
+    },
+    rowNo: {
+      type: Number,
+      required: true
+    },
+    colNo: {
+      type: Number,
+      required: true
+    }
+  },
+  { timestamps: true }
+);
+
+// validate rack uniqueness
+RackSchema.pre("save", async function (next) {
+  const existingItem = await mongoose.models.Rack.findOne({
+    rowNo: this.rowNo,
+    colNo: this.colNo,
+  });
+
+  if (existingItem) {
+    const err = new Error("A grid item with the same row and column already exists.");
+    return next(err);
+  }
+  next();
+});
+
+export const Rack = mongoose.model("Rack", RackSchema);
+
+
+// ///////////////////////////// add product on rack /////////////////////////////////
+
+
+// RackOrder Schema
+const RackOrderSchema = new mongoose.Schema(
+  {
+    rowId: {
+      type: String, 
+      required: true,
+    },
+    orderId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Order',
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
+
+export const RackOrder = mongoose.model('RackOrder', RackOrderSchema);
+
+
+
+
