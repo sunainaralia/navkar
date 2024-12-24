@@ -51,6 +51,11 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  isAdmin:{
+    type: Boolean,
+    default: false,
+    immutable: true 
+  },
   resetToken: String,
   resetTokenExpiresIn: Date,
   personal_id: {
