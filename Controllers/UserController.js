@@ -401,7 +401,7 @@ export const getAllDrivers = asyncFunHandler(async (req, res, next) => {
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
   const totalDrivers = await Driver.countDocuments();
-  const drivers = await Driver.find().populate('userId').skip(skip).limit(limit);;
+  const drivers = await Driver.find().populate('userId').skip(skip).limit(limit);
   if (!drivers.length) {
     let err = new CustomErrorHandler("no driver found", 404);
     return next(err);
