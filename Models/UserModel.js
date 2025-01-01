@@ -51,10 +51,13 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
-  isAdmin:{
+  isAdmin: {
     type: Boolean,
     default: false,
-    immutable: true 
+    immutable: true
+  },
+  warehouse: {
+    type: String,
   },
   resetToken: String,
   resetTokenExpiresIn: Date,

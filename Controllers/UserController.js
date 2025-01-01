@@ -419,7 +419,8 @@ export const getAllDrivers = asyncFunHandler(async (req, res, next) => {
     license: driver.license,
     license_image: driver.license_image,
     address: driver.address,
-    availability: driver.availability
+    availability: driver.availability,
+    zone_assigned: driver.userId.zone_assigned
 
   }));
   res.status(200).json({
