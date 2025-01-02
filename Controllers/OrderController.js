@@ -564,7 +564,6 @@ export const getOrderByOrderToken = asyncFunHandler(async (req, res, next) => {
 });
 
 
-
 /////////////////////////////////////// rack //////////////////////////////////////
 export const createRack = asyncFunHandler(async (req, res, next) => {
   const { rowId, rowNo, colNo } = req.body;

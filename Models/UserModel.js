@@ -67,9 +67,11 @@ const userSchema = new mongoose.Schema({
   },
   warehouse: {
     type: String,
+    default: null
   },
   admin_address: {
     type: String,
+    default: null
   },
   resetToken: String,
   resetTokenExpiresIn: Date,

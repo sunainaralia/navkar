@@ -1,5 +1,5 @@
 import User, { Client, Driver, Permission } from '../Models/UserModel.js';
-import { Customer} from '../Models/OrderOfClient.js';
+import { Customer } from '../Models/OrderOfClient.js';
 import pkg from 'jsonwebtoken';
 import CustomErrorHandler from '../Utils/CustomErrorHandler.js';
 import asyncFunHandler from '../Utils/asyncFunHandler.js';
@@ -44,7 +44,9 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
     confirmPassword: userConfirmPassword,
     role,
     zone_assigned,
-    status
+    status,
+    warehouse,
+    admin_address,
   });
   const token = genrateToken(newUser._id);
   let roleData;
@@ -205,7 +207,7 @@ export const getUserProfile = asyncFunHandler(async (req, res, next) => {
 export const editUser = asyncFunHandler(async (req, res) => {
   let role = req.user.role
   const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address, address2, admin_address, warehouse } = req.body;
-  const getUserndUpdate = await User.findByIdAndUpdate(req.user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status, warehouse,admin_address }, { new: true, runValidators: true });
+  const getUserndUpdate = await User.findByIdAndUpdate(req.user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status, warehouse, admin_address }, { new: true, runValidators: true });
   let roleData;
   if (role === 'client') {
     roleData = await Client.findOneAndUpdate(
@@ -377,7 +379,8 @@ export const getAllAdmin = asyncFunHandler(async (req, res, next) => {
 
   const admins = await User.find({ role: { $nin: ['client', 'driver'] } })
     .skip(skip)
-    .limit(limitNumber);
+    .limit(limitNumber)
+  console.log(admins)
 
   const totalAdmins = await User.countDocuments({ role: { $nin: ['client', 'driver'] } });
 
@@ -481,7 +484,7 @@ export const editUserById = asyncFunHandler(async (req, res) => {
     return next(new CustomErrorHandler("User not found", 404));
   };
   let role = user.role
-  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address, address2, warehouse,admin_address } = req.body;
+  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address, address2, warehouse, admin_address } = req.body;
   const getUserndUpdate = await User.findByIdAndUpdate(user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status, warehouse, admin_address }, { new: true, runValidators: true });
   let roleData;
   if (role === 'client') {
@@ -537,10 +540,6 @@ export const deleteUserById = asyncFunHandler(async (req, res, next) => {
     msg: `${role} is deleted successfully`
   });
 });
-
-
-
-
 
 // Create a new permission
 export const createPermission = asyncFunHandler(async (req, res, next) => {
