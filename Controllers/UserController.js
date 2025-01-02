@@ -1,5 +1,5 @@
-import User, { Client, Driver } from '../Models/UserModel.js';
-import { Customer, Permission } from '../Models/OrderOfClient.js';
+import User, { Client, Driver, Permission } from '../Models/UserModel.js';
+import { Customer} from '../Models/OrderOfClient.js';
 import pkg from 'jsonwebtoken';
 import CustomErrorHandler from '../Utils/CustomErrorHandler.js';
 import asyncFunHandler from '../Utils/asyncFunHandler.js';
