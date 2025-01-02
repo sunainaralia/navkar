@@ -1,5 +1,11 @@
 import { Router } from "express";
-import { signUpUser, LoginUser, getUserProfile, editUser, changePassword, forgotPassword, resetPassword, getAllClients, getAllAdmin, getAllDrivers, getUserProfileById, editUserById, deleteUserById, LoginAdmin } from "../Controllers/UserController.js";
+import {
+  signUpUser, LoginUser, getUserProfile, editUser, changePassword, forgotPassword, resetPassword, getAllClients, getAllAdmin, getAllDrivers, getUserProfileById, editUserById, deleteUserById, LoginAdmin, createPermission,
+  getAllPermissions,
+  getPermissionById,
+  updatePermissionById,
+  deletePermissionById
+} from "../Controllers/UserController.js";
 import VerifyToken from '../Middlewares/VerifyToken.js'
 
 export const userRouter = Router();
@@ -26,3 +32,11 @@ userRouter.route('/:id/')
   .get(VerifyToken, getUserProfileById)
   .patch(VerifyToken, editUserById)
   .delete(VerifyToken, deleteUserById)
+userRouter.route('/permission/')
+  .post(VerifyToken, createPermission)
+  .get(VerifyToken, getAllPermissions)
+
+userRouter.route('/permission/:id/')
+  .get(VerifyToken, getPermissionById)
+  .patch(VerifyToken, updatePermissionById)
+  .delete(VerifyToken, deletePermissionById); 

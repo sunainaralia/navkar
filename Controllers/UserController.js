@@ -1,5 +1,5 @@
 import User, { Client, Driver } from '../Models/UserModel.js';
-import { Customer } from '../Models/OrderOfClient.js';
+import { Customer, Permission } from '../Models/OrderOfClient.js';
 import pkg from 'jsonwebtoken';
 import CustomErrorHandler from '../Utils/CustomErrorHandler.js';
 import asyncFunHandler from '../Utils/asyncFunHandler.js';
@@ -533,5 +533,99 @@ export const deleteUserById = asyncFunHandler(async (req, res, next) => {
   res.status(200).json({
     success: true,
     msg: `${role} is deleted successfully`
+  });
+});
+
+
+
+
+
+// Create a new permission
+export const createPermission = asyncFunHandler(async (req, res, next) => {
+  const { role, assign_permission } = req.body;
+
+  if (!role || !assign_permission || assign_permission.length === 0) {
+    return next(new CustomErrorHandler('Role or permissions not provided', 400));
+  }
+
+  // Create and save the new permission
+  const permission = new Permission({ role, assign_permission });
+  await permission.save();
+
+  res.status(201).json({
+    success: true,
+    msg: 'Permission created successfully',
+    data: permission
+  });
+});
+
+// Get all permissions
+export const getAllPermissions = asyncFunHandler(async (req, res, next) => {
+  const permissions = await Permission.find();
+
+  if (permissions.length === 0) {
+    return next(new CustomErrorHandler('No permissions found', 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    msg: 'Permissions retrieved successfully',
+    data: permissions
+  });
+});
+
+// Get permission by ID
+export const getPermissionById = asyncFunHandler(async (req, res, next) => {
+  const { id } = req.params;
+
+  const permission = await Permission.findById(id);
+
+  if (!permission) {
+    return next(new CustomErrorHandler('Permission not found', 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    msg: 'Permission retrieved successfully',
+    data: permission
+  });
+});
+
+// Update permission by ID
+export const updatePermissionById = asyncFunHandler(async (req, res, next) => {
+  const { id } = req.params;
+  const { role, assign_permission } = req.body;
+
+  if (!role || !assign_permission || assign_permission.length === 0) {
+    return next(new CustomErrorHandler('Role or permissions not provided', 400));
+  }
+
+  const permission = await Permission.findByIdAndUpdate(id, { role, assign_permission }, { new: true });
+
+  if (!permission) {
+    return next(new CustomErrorHandler('Permission not found', 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    msg: 'Permission updated successfully',
+    data: permission
+  });
+});
+
+// Delete permission by ID
+export const deletePermissionById = asyncFunHandler(async (req, res, next) => {
+  const { id } = req.params;
+
+  const permission = await Permission.findByIdAndDelete(id);
+
+  if (!permission) {
+    return next(new CustomErrorHandler('Permission not found', 404));
+  }
+
+  res.status(200).json({
+    success: true,
+    msg: 'Permission deleted successfully',
+    data: permission
   });
 });

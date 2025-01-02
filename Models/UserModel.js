@@ -2,6 +2,15 @@ import mongoose from 'mongoose';
 import validator from 'validator';
 import bcryptjs from 'bcryptjs';
 import crypto from 'crypto'
+
+const permissionSchema = new mongoose.Schema({
+  role: {
+    type: String
+  },
+  assign_permission: {
+    type: [String]
+  }
+});
 // all user schema or admin schema 
 const userSchema = new mongoose.Schema({
   name: {
@@ -166,6 +175,7 @@ userSchema.methods.resetPasswordToken = async function () {
 
 // export all users (admin,client,user)
 const User = mongoose.model('User', userSchema);
+export const permission = mongoose.model('Permission', permissionSchema)
 export const Driver = mongoose.model('Driver', DriverSchema);
 export const Client = mongoose.model('Client', ClientSchema);
 export default User;
