@@ -141,6 +141,9 @@ export const LoginAdmin = asyncFunHandler(async (req, res, next) => {
   }
 
   const user = await User.findOne({ email });
+  if (!(user)) {
+    return next(new CustomErrorHandler("you are not registered", 400));
+  }
   if (!(user.isAdmin)) {
     return next(new CustomErrorHandler("you have no authority to login", 400));
   }
@@ -368,7 +371,7 @@ export const getAllAdmin = asyncFunHandler(async (req, res, next) => {
   const pageNumber = parseInt(page, 10);
   const limitNumber = parseInt(limit, 10);
 
-  const skip = (pageNumber - 1) * limitNumber; 
+  const skip = (pageNumber - 1) * limitNumber;
 
   const admins = await User.find({ role: { $nin: ['client', 'driver'] } })
     .skip(skip)
