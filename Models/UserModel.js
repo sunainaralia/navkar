@@ -68,6 +68,9 @@ const userSchema = new mongoose.Schema({
   warehouse: {
     type: String,
   },
+  admin_address: {
+    type: String,
+  },
   resetToken: String,
   resetTokenExpiresIn: Date,
   personal_id: {

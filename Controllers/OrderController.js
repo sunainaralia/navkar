@@ -135,10 +135,17 @@ export const getAllOrders = asyncFunHandler(async (req, res, next) => {
     })
     .skip(skip)
     .limit(limit);
+
   const formattedOrders = orders.map((order) => {
-    const senderId = order.recieverId.senderId;
-    const recieverId = { ...order.recieverId._doc };
-    delete recieverId.senderId; 
+    const recieverId = order.recieverId ? { ...order.recieverId._doc } : {};
+
+    // Safely get senderId if available after populate
+    const senderId = recieverId && recieverId.senderId ? recieverId.senderId : null;
+
+    // If senderId exists, delete it from recieverId to prevent sending unnecessary data
+    if (recieverId && recieverId.senderId) {
+      delete recieverId.senderId;
+    }
 
     return {
       ...order._doc,
@@ -159,6 +166,9 @@ export const getAllOrders = asyncFunHandler(async (req, res, next) => {
     },
   });
 });
+
+
+
 
 
 //////////////////////////////  Controller to get an order by userId ///////////////////////

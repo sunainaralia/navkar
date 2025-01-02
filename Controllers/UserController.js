@@ -24,6 +24,8 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
     confirmPassword,
     zone_assigned,
     status,
+    warehouse,
+    admin_address,
     ...roleSpecificData
   } = req.body;
   let userPassword = password;
@@ -202,8 +204,8 @@ export const getUserProfile = asyncFunHandler(async (req, res, next) => {
 //////////////// update the client profile //////////////////
 export const editUser = asyncFunHandler(async (req, res) => {
   let role = req.user.role
-  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address, address2 } = req.body;
-  const getUserndUpdate = await User.findByIdAndUpdate(req.user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status }, { new: true, runValidators: true });
+  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address, address2, admin_address, warehouse } = req.body;
+  const getUserndUpdate = await User.findByIdAndUpdate(req.user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status, warehouse,admin_address }, { new: true, runValidators: true });
   let roleData;
   if (role === 'client') {
     roleData = await Client.findOneAndUpdate(
@@ -479,8 +481,8 @@ export const editUserById = asyncFunHandler(async (req, res) => {
     return next(new CustomErrorHandler("User not found", 404));
   };
   let role = user.role
-  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address, address2 } = req.body;
-  const getUserndUpdate = await User.findByIdAndUpdate(user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status }, { new: true, runValidators: true });
+  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address, address2, warehouse,admin_address } = req.body;
+  const getUserndUpdate = await User.findByIdAndUpdate(user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status, warehouse, admin_address }, { new: true, runValidators: true });
   let roleData;
   if (role === 'client') {
     roleData = await Client.findOneAndUpdate(
