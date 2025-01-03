@@ -483,17 +483,17 @@ export const editUserById = asyncFunHandler(async (req, res) => {
   if (!user) {
     return next(new CustomErrorHandler("User not found", 404));
   };
-  let role = user.role
-  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address, address2, warehouse, admin_address } = req.body;
-  const getUserndUpdate = await User.findByIdAndUpdate(user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status, warehouse, admin_address }, { new: true, runValidators: true });
+  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address, address2, warehouse, admin_address,role } = req.body;
+  const getUserndUpdate = await User.findByIdAndUpdate(user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status, warehouse, admin_address,role }, { new: true, runValidators: true });
   let roleData;
-  if (role === 'client') {
+  let userRole = user.role
+  if (userRole === 'client') {
     roleData = await Client.findOneAndUpdate(
       { userId: user.id },
       { businessName, province, city, postalCode, address1, address2 },
       { new: true, runValidators: true }
     );
-  } else if (role === 'driver') {
+  } else if (userRole === 'driver') {
     roleData = await Driver.findOneAndUpdate(
       { userId: user.id },
       { license, license_image, address, availability },
