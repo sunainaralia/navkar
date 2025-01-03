@@ -563,7 +563,6 @@ export const createPermission = asyncFunHandler(async (req, res, next) => {
 // Get all permissions
 export const getAllPermissions = asyncFunHandler(async (req, res, next) => {
   const permissions = await Permission.find();
-
   if (permissions.length === 0) {
     return next(new CustomErrorHandler('No permissions found', 404));
   }

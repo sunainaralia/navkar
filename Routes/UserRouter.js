@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   signUpUser, LoginUser, getUserProfile, editUser, changePassword, forgotPassword, resetPassword, getAllClients, getAllAdmin, getAllDrivers, getUserProfileById, editUserById, deleteUserById, LoginAdmin, createPermission,
+
   getAllPermissions,
   getPermissionById,
   updatePermissionById,
@@ -28,10 +29,6 @@ userRouter.route('/admins/')
   .post(LoginAdmin)
 userRouter.route('/drivers/')
   .get(getAllDrivers)
-userRouter.route('/:id/')
-  .get(VerifyToken, getUserProfileById)
-  .patch(VerifyToken, editUserById)
-  .delete(VerifyToken, deleteUserById)
 userRouter.route('/permission/')
   .post(VerifyToken, createPermission)
   .get(VerifyToken, getAllPermissions)
@@ -39,4 +36,8 @@ userRouter.route('/permission/')
 userRouter.route('/permission/:id/')
   .get(VerifyToken, getPermissionById)
   .patch(VerifyToken, updatePermissionById)
-  .delete(VerifyToken, deletePermissionById); 
+  .delete(VerifyToken, deletePermissionById)
+userRouter.route('/:id/')
+  .get(VerifyToken, getUserProfileById)
+  .patch(VerifyToken, editUserById)
+  .delete(VerifyToken, deleteUserById)
