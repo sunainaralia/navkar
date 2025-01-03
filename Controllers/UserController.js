@@ -341,20 +341,20 @@ export const getAllClients = asyncFunHandler(async (req, res, next) => {
   }
   const formattedClients = clients.map((client) => ({
     _id: client._id,
-    userId: client.userId._id,
-    name: client.userId.name,
-    email: client.userId.email,
-    phone_no: client.userId.phone_no,
-    role: client.userId.role,
-    status: client.userId.status,
-    created_at: client.userId.created_at,
-    updated_at: client.userId.updated_at,
+    userId: client.userId ? client.userId._id : null, // Fallback to null if userId is missing
+    name: client.userId?.name || null,
+    email: client.userId?.email || null,
+    phone_no: client.userId?.phone_no || null,
+    role: client.userId?.role || null,
+    status: client.userId?.status || null,
+    created_at: client.userId?.created_at || null,
+    updated_at: client.userId?.updated_at || null,
     businessName: client.businessName,
     province: client.province,
     city: client.city,
     postalCode: client.postalCode,
     address1: client.address1,
-    address2: client.address2
+    address2: client.address2,
   }));
   res.status(200).json({
     success: true,
