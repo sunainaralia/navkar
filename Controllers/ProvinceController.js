@@ -167,7 +167,7 @@ export const createZone = asyncFunHandler(async (req, res, next) => {
   }
 
   const newZone = new Zone({
-    Zone: zone,
+    zone: zone,
     postalCode: postalCode,
   });
 
