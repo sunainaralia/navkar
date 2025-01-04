@@ -341,14 +341,14 @@ export const getAllClients = asyncFunHandler(async (req, res, next) => {
   }
   const formattedClients = clients.map((client) => ({
     _id: client._id,
-    userId: client.userId ? client.userId._id : null, // Fallback to null if userId is missing
-    name: client.userId?.name || null,
-    email: client.userId?.email || null,
-    phone_no: client.userId?.phone_no || null,
-    role: client.userId?.role || null,
-    status: client.userId?.status || null,
-    created_at: client.userId?.created_at || null,
-    updated_at: client.userId?.updated_at || null,
+    userId: client.userId,
+    name: client.userId?.name,
+    email: client.userId?.email,
+    phone_no: client.userId?.phone_no,
+    role: client.userId?.role,
+    status: client.userId?.status,
+    created_at: client.userId?.created_at,
+    updated_at: client.userId?.updated_at,
     businessName: client.businessName,
     province: client.province,
     city: client.city,
@@ -483,8 +483,8 @@ export const editUserById = asyncFunHandler(async (req, res) => {
   if (!user) {
     return next(new CustomErrorHandler("User not found", 404));
   };
-  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address, address2, warehouse, admin_address,role } = req.body;
-  const getUserndUpdate = await User.findByIdAndUpdate(user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status, warehouse, admin_address,role }, { new: true, runValidators: true });
+  const { name, email, phone_no, password, confirmPassword, zone_assigned, status, businessName, province, city, postalCode, address1, license, license_image, availability, address, address2, warehouse, admin_address, role } = req.body;
+  const getUserndUpdate = await User.findByIdAndUpdate(user.id, { name, email, phone_no, password, role, confirmPassword, zone_assigned, status, warehouse, admin_address, role }, { new: true, runValidators: true });
   let roleData;
   let userRole = user.role
   if (userRole === 'client') {
