@@ -86,7 +86,7 @@ export const signUpUser = asyncFunHandler(async (req, res, next) => {
   // Send an email to clients with the generated password
   if (role === "client") {
     try {
-      const msg = `You are registered as a client with password: ${userPassword}. Please copy your password to log in using the following link:\n\nhttps://navkar-logistics-5y5m.vercel.app/login`;
+      const msg = `You are registered as a client with password: ${userPassword}. Please copy your password to log in using the following link:\n\nhttps://navkar-logistics-two.vercel.app/login`;
       sendEmail({
         msg: msg,
         email: email,

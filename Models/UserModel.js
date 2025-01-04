@@ -27,12 +27,6 @@ const userSchema = new mongoose.Schema({
   phone_no: {
     type: String,
     required: [true, "Phone number is required"],
-    validate: {
-      validator: function (v) {
-        return /^[0-9]{10}$/.test(v);
-      },
-      message: "Please enter a valid 10-digit phone number"
-    }
   },
   password: {
     type: String,
