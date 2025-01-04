@@ -500,7 +500,6 @@ export const editUserById = asyncFunHandler(async (req, res) => {
       { new: true, runValidators: true }
     );
   }
-
   let responseData;
   if (roleData) {
     responseData = {
