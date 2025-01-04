@@ -98,7 +98,10 @@ export const deleteProvinceById = asyncFunHandler(async (req, res, next) => {
 
   await Province.findByIdAndDelete(provinceId);
 
-  res.status(204).send();
+  res.status(200).json({
+    success: true,
+    msg: "province deleted successfully",
+  });;
 });
 
 // //////////////////// Update province by ID ////////////////////
@@ -217,7 +220,10 @@ export const deleteZoneById = asyncFunHandler(async (req, res, next) => {
 
   await Zone.findByIdAndDelete(zoneId);
 
-  res.status(204).send();
+  res.status(200).json({
+    success: true,
+    msg: "Zone deleted successfully",
+  });
 });
 
 // /////////////////////// Update zone by ID ////////////////////
