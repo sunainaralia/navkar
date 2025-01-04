@@ -53,7 +53,7 @@ const ZoneSchema = new mongoose.Schema({
     default: true
   },
   postalCode: {
-    type: [Number],
+    type: [String],
     required: [true, "postalCode is required"]
   },
 }, { timestamps: true });
