@@ -4,8 +4,8 @@ import { getAllProvinces, deleteProvinceById, getProvinceById, updateProvinceByI
 
 export const ProvinceRouter = Router();
 ProvinceRouter.route('/zone/')
-  .post(VerifyToken, createZone)
-  .get(VerifyToken, getAllZones)
+  .post( createZone)
+  .get( getAllZones)
 ProvinceRouter.route('/zone/:id/')
   .delete(VerifyToken, deleteZoneById)
   .get(VerifyToken, getZoneById)

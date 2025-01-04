@@ -330,6 +330,7 @@ export const resetPassword = asyncFunHandler(async (req, res, next) => {
 /////////////////////// get all client//////////////////////////////
 
 export const getAllClients = asyncFunHandler(async (req, res, next) => {
+ 
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
@@ -341,14 +342,8 @@ export const getAllClients = asyncFunHandler(async (req, res, next) => {
   }
   const formattedClients = clients.map((client) => ({
     _id: client._id,
-    userId: client.userId,
-    name: client.userId?.name,
-    email: client.userId?.email,
-    phone_no: client.userId?.phone_no,
-    role: client.userId?.role,
-    status: client.userId?.status,
-    created_at: client.userId?.created_at,
-    updated_at: client.userId?.updated_at,
+    user: client.userId,
+
     businessName: client.businessName,
     province: client.province,
     city: client.city,
@@ -356,6 +351,7 @@ export const getAllClients = asyncFunHandler(async (req, res, next) => {
     address1: client.address1,
     address2: client.address2,
   }));
+  console.log(formattedClients)
   res.status(200).json({
     success: true,
     msg: "all Clients fetched successfully",

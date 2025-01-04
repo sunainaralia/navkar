@@ -44,7 +44,7 @@ const ProvinceSchema = new mongoose.Schema({
 
 export const Province = mongoose.model('Province', ProvinceSchema);
 const ZoneSchema = new mongoose.Schema({
-  Zone: {
+  zone: {
     type: String,
     required: [true, "Zone is required"]
   },

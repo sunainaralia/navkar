@@ -159,7 +159,13 @@ export const getAllZones = asyncFunHandler(async (req, res, next) => {
 export const createZone = asyncFunHandler(async (req, res, next) => {
   const { zone, postalCode } = req.body;
 
+  console.log(zone,postalCode);
+
+ 
+  
+
   if (!zone || !postalCode || !Array.isArray(postalCode) || postalCode.length === 0) {
+
     return res.status(400).json({
       success: false,
       msg: "Zone and postalCode array are required. Postal codes must be non-empty.",
@@ -173,6 +179,7 @@ export const createZone = asyncFunHandler(async (req, res, next) => {
 
   try {
     const createdZone = await newZone.save();
+    
     res.status(201).json({
       success: true,
       msg: "Zone created successfully.",
