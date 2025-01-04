@@ -342,14 +342,15 @@ export const getAllClients = asyncFunHandler(async (req, res, next) => {
   }
   const formattedClients = clients.map((client) => ({
     _id: client._id,
-    userId: client.userId._Id,
-    name: client.userId?.name,
-    email: client.userId?.email,
-    phone_no: client.userId?.phone_no,
-    role: client.userId?.role,
-    status: client.userId?.status,
-    created_at: client.userId?.created_at,
-    updated_at: client.userId?.updated_at,
+    user: client.userId,
+    userId: client.user?._id,
+    name: client.user?.name,
+    email: client.user?.email,
+    phone_no: client.user?.phone_no,
+    role: client.user?.role,
+    status: client.user?.status,
+    created_at: client.user?.created_at,
+    updated_at: client.user?.updated_at,
     businessName: client.businessName,
     province: client.province,
     city: client.city,
@@ -357,7 +358,7 @@ export const getAllClients = asyncFunHandler(async (req, res, next) => {
     address1: client.address1,
     address2: client.address2,
   }));
-  console.log(formattedClients)
+ 
   res.status(200).json({
     success: true,
     msg: "all Clients fetched successfully",
