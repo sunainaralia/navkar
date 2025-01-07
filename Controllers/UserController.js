@@ -146,8 +146,21 @@ export const LoginAdmin = asyncFunHandler(async (req, res, next) => {
 
   const user = await User.findOne({ email });
 
+  if (
+    user.role.toLowerCase() == "client" ||
+    user.role.toLowerCase() == "driver"
+  ) {
+    return next(
+      new CustomErrorHandler(
+        "You are Unauthorized to login in this platform",
+        401
+      )
+    );
+  }
+
   
-  const permissionValue = await Permission.findById(user.id);
+  const permissionValue = await Permission.findOne({ role:user.role});
+
   let permissionData={};
   if(permissionValue!=null){
     permissionData= permissionValue.toObject()
