@@ -145,6 +145,15 @@ export const LoginAdmin = asyncFunHandler(async (req, res, next) => {
   }
 
   const user = await User.findOne({ email });
+
+  
+  const permissionValue = await Permission.findById(user.id);
+  let permissionData={};
+  if(permissionValue!=null){
+    permissionData= permissionValue.toObject()
+  }
+  
+ 
   if (!(user)) {
     return next(new CustomErrorHandler("you are not registered", 400));
   }
@@ -156,7 +165,8 @@ export const LoginAdmin = asyncFunHandler(async (req, res, next) => {
   }
 
   const combinedData = {
-    ...user.toObject()
+    ...user.toObject(),
+    permission: permissionData,
   };
   const token = genrateToken(user._id);
   res.status(200).json({
