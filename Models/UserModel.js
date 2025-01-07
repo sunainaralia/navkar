@@ -5,11 +5,12 @@ import crypto from 'crypto'
 
 const permissionSchema = new mongoose.Schema({
   role: {
-    type: String
+    type: String,
+    unique: true,
   },
   assign_permission: {
-    type: [String]
-  }
+    type: [String],
+  },
 });
 // all user schema or admin schema 
 const userSchema = new mongoose.Schema({
