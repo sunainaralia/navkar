@@ -157,9 +157,7 @@ export const LoginAdmin = asyncFunHandler(async (req, res, next) => {
   if (!(user)) {
     return next(new CustomErrorHandler("you are not registered", 400));
   }
-  if (!(user.isAdmin)) {
-    return next(new CustomErrorHandler("you have no authority to login", 400));
-  }
+
   if (!user || !(await user.comparePasswordInDb(password, user.password))) {
     return next(new CustomErrorHandler("Email or password is not correct", 400));
   }
